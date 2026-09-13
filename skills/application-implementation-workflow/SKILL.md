@@ -25,7 +25,9 @@ A project may assign Codex, Claude, or another capable agent to either role. The
 
 Implementation must be fully reviewed and corrected before the artifact leaves the integration environment.
 
-The integration PR is the final implementation-review boundary.
+The integration PR is the final implementation-review boundary for the normal application path.
+
+If a project explicitly permits a direct-to-production implementation path such as an emergency hotfix, that PR inherits the same final implementation-review responsibilities because it bypasses integration.
 
 The promotion path must not become another implementation or feature-review cycle.
 
@@ -35,7 +37,7 @@ The promotion path must not become another implementation or feature-review cycl
 
 # Branch model
 
-Every implementation issue begins from the project's designated integration branch.
+Every ordinary implementation issue begins from the project's designated integration branch.
 
 Examples include:
 
@@ -48,6 +50,8 @@ Agent #1 must create or switch to an issue-specific feature/fix branch before co
 Do not commit implementation directly to the integration branch.
 
 The exact branch naming convention is repository-specific and should follow the repository's existing standards.
+
+A project may explicitly document a direct-to-production exception path such as `hotfix/*`. Such a path is an implementation path, not a promotion path, and must preserve the review guarantees defined later in this skill.
 
 ---
 
@@ -240,7 +244,7 @@ For repositories using Codex's current GitHub review behavior:
 - a Codex 👍 reaction indicates the automated review completed without review suggestions;
 - a Codex review/comment indicates the automated review completed with findings that must be evaluated before merge.
 
-If substantive commits are pushed after review findings, the final PR head must be reviewed again before merge.
+**Every substantive PR head change invalidates the prior automated review for merge purposes.** After any substantive commit — including review corrections, conflict resolution, or an author-discovered correction — the configured automated reviewer must review the final PR head before merge.
 
 ## Human approval gate
 
@@ -263,6 +267,22 @@ If legitimate findings are discovered during PR review:
 Do not knowingly merge blocking implementation defects into the integration branch with the intention of fixing them during promotion.
 
 If a discovered issue is genuinely non-blocking and not part of the current issue's acceptance boundary, create a follow-up backlog issue rather than expanding the promotion PR.
+
+---
+
+# Direct-to-production implementation exceptions
+
+If a project explicitly permits an implementation PR to target production directly — for example, an emergency `hotfix/*` path — that PR is **not** a promotion PR.
+
+Because it bypasses the integration PR boundary, it must inherit the same implementation-review protections:
+
+- full-scope production-bound implementation review;
+- completion of any configured automated PR review on the final PR head;
+- re-review after every substantive head change;
+- resolution of blocking findings before merge;
+- the project's required human approval gate, where applicable.
+
+Do not relax implementation review merely because the change is urgent or because the PR targets the production branch.
 
 ---
 
@@ -326,7 +346,9 @@ Likewise:
 - correction prompts must prohibit commit/push/PR before re-review;
 - approval handoffs must not silently introduce unreviewed changes;
 - integration-PR prompts must require completion of configured automated review before the human merge decision;
+- integration-PR prompts must require re-review after every substantive PR head change;
 - integration-PR prompts must preserve the required human approval gate where the project uses one;
+- direct-to-production implementation prompts must preserve the same implementation-review protections rather than treating the PR as promotion;
 - promotion prompts must not invent a new implementation-review phase.
 
 ---
@@ -360,7 +382,7 @@ Agent #2 independent review
          ↓
       full-scope automated PR review completes
          ↓
-      resolve blocking findings / re-review final head as needed
+      resolve blocking findings / re-review final head after any substantive change
          ↓
       required human approval
          ↓
@@ -372,6 +394,8 @@ Agent #2 independent review
          ↓
       production
 ```
+
+A documented direct-to-production implementation exception bypasses the integration/promotion path but **not** the full-scope review, final-head review, blocking-finding resolution, or human-approval protections.
 
 ---
 
@@ -385,8 +409,9 @@ An implementation follows this skill only when:
 - only an approved artifact is committed and pushed;
 - the integration PR receives the Promotion Protection comment immediately after creation;
 - the configured automated PR review is allowed to complete before the human merge decision;
-- substantive post-review commits receive review on the final PR head before merge;
+- every substantive post-review head change receives automated review on the final PR head before merge;
 - the required human approval gate is satisfied before integration merge;
+- direct-to-production implementation exceptions receive the same implementation-review protections;
 - blocking findings are resolved before promotion;
 - non-blocking late discoveries become backlog issues;
 - promotion introduces no new implementation;
