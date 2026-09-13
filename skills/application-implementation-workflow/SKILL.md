@@ -25,6 +25,8 @@ A project may assign Codex, Claude, or another capable agent to either role. The
 
 Implementation must be fully reviewed and corrected before the artifact leaves the integration environment.
 
+The integration PR is the final implementation-review boundary.
+
 The promotion path must not become another implementation or feature-review cycle.
 
 **Promotion expectation: zero gum on the bottom of the shoe.**
@@ -151,7 +153,7 @@ This step is mandatory.
 
 A commit/push/PR handoff that omits this comment is incomplete.
 
-The purpose is to establish the implementation PR as the final implementation/review boundary and prevent defects from being knowingly carried into the promotion PR.
+The purpose is to establish the implementation PR as the final implementation-review boundary, instruct PR reviewers to review the implementation as production-bound software, and prevent defects from being knowingly carried into the promotion PR.
 
 ## Canonical Promotion Protection comment
 
@@ -160,26 +162,37 @@ Post this as a top-level PR comment, replacing `<ISSUE>` with the governing issu
 ```markdown
 ## Promotion Protection
 
-This PR is the implementation and review boundary for issue <ISSUE>.
+This PR is the **final implementation-review boundary** for issue <ISSUE>.
 
-Before this work is promoted from the integration branch to production:
+Review this implementation as production-bound software, not only against the stated acceptance criteria.
 
-- all implementation findings must be resolved here;
-- all contract, test, architecture, security, and documentation findings must be resolved before this PR is merged to the integration branch;
-- no known corrective work should be deferred into the promotion PR;
-- the artifact promoted to production should be the already-reviewed artifact from the integration branch;
-- the promotion PR must not contain new implementation changes or become another feature-review cycle.
+Before this PR is merged to the integration branch, review the changed behavior and its relevant surrounding system for:
 
-If a new issue is discovered after this PR reaches the integration branch, determine whether it blocks promotion.
+- correctness and edge cases;
+- architecture and repository-pattern consistency;
+- API, domain, and runtime contract consistency;
+- authorization, security, and privacy;
+- persistence and data-access behavior;
+- performance, including N+1 queries and unnecessary database or network round trips;
+- concurrency and idempotency where applicable;
+- failure handling and operational behavior;
+- regressions and adjacent-system effects;
+- OpenAPI and documentation drift;
+- missing or weak tests;
+- duplicated functionality or unnecessary divergence from established patterns.
 
-If it blocks promotion:
-- fix it in the integration branch;
-- re-run the normal implementation/review workflow;
-- resolve it before promotion.
+All blocking implementation findings must be resolved **here**, before merge to the integration branch. Substantive corrections must follow the normal correction and re-review workflow.
 
-If it does not block promotion:
-- create a follow-up backlog issue;
-- do not expand the promotion PR.
+Do not knowingly carry corrective implementation work into promotion.
+
+The artifact promoted to production should be the already-reviewed artifact from the integration branch.
+
+A promotion PR is **not another feature-review cycle**. Its purpose is artifact and promotion-integrity verification only.
+
+If a new issue is discovered after this PR reaches the integration branch:
+
+- **Blocking:** fix it through the normal implementation/review workflow before promotion.
+- **Non-blocking:** create a follow-up backlog issue and do not expand the promotion PR.
 
 **Promotion expectation: zero gum on the bottom of the shoe.**
 ```
@@ -188,9 +201,54 @@ Projects may replace the generic words `integration branch` and `production` wit
 
 ---
 
-# Phase 6 — Integration PR review
+# Phase 6 — Integration PR review and merge gate
 
-The integration PR is the last place where implementation findings are expected to be resolved.
+The integration PR is the last place where implementation findings are expected to be discovered and resolved.
+
+## Full-scope implementation review
+
+A configured PR reviewer must review the implementation as production-bound software, not merely verify the issue's acceptance criteria.
+
+The review should inspect, where applicable:
+
+- correctness and edge cases;
+- architecture and layering;
+- repository-pattern consistency;
+- API, domain, and runtime contract consistency;
+- authorization, security, and privacy;
+- persistence and data-access behavior;
+- performance, including N+1 queries and avoidable database or network round trips;
+- concurrency and idempotency;
+- failure handling and operational behavior;
+- OpenAPI and documentation drift;
+- regression risk and adjacent-system effects;
+- missing, weak, or misleading tests;
+- duplicated functionality;
+- unnecessary divergence from established repository patterns;
+- scope discipline.
+
+Successful acceptance-criteria coverage is not, by itself, sufficient evidence of implementation quality.
+
+## Automated-review completion hold point
+
+If the repository has a configured automated PR reviewer, **do not merge the integration PR while that review is still in progress**.
+
+The automated review must be allowed to complete on the PR artifact before the human merge decision is made.
+
+For repositories using Codex's current GitHub review behavior:
+
+- a Codex 👍 reaction indicates the automated review completed without review suggestions;
+- a Codex review/comment indicates the automated review completed with findings that must be evaluated before merge.
+
+If substantive commits are pushed after review findings, the final PR head must be reviewed again before merge.
+
+## Human approval gate
+
+After the automated review completes and all blocking findings are resolved, the integration PR requires the project's designated human approval before merge.
+
+Where GitHub branch protection or rulesets are available, configure the integration branch to require at least **one qualifying approving review** before merge so this gate is technically enforced rather than dependent on memory.
+
+Do not treat an automated 👍 reaction as the required human approval.
 
 If legitimate findings are discovered during PR review:
 
@@ -198,7 +256,9 @@ If legitimate findings are discovered during PR review:
 2. if blocking, correct them on the issue branch/integration path;
 3. repeat the normal Agent #1 correction and Agent #2 review discipline for substantive corrections;
 4. update the integration PR;
-5. resolve findings before merging to the integration branch.
+5. allow the configured automated PR reviewer to complete review of the final PR head;
+6. obtain the required human approval;
+7. resolve findings before merging to the integration branch.
 
 Do not knowingly merge blocking implementation defects into the integration branch with the intention of fixing them during promotion.
 
@@ -222,13 +282,15 @@ It must contain:
 
 The purpose of the promotion PR is to verify that the reviewed artifact leaving the integration branch is the artifact intended for production.
 
+Promotion review is limited to artifact and promotion integrity: expected delta, source branch correctness, absence of unexpected implementation changes, and safe promotion of the reviewed integration artifact.
+
 ## No invented Agent #2 promotion-review step
 
 This workflow does **not** include a mandatory second Agent #2 feature review of the promotion PR.
 
 Do not invent an Agent #2 promotion-PR review phase unless a project explicitly adopts one for a separate reason.
 
-The substantive independent review happens before the implementation is committed and again after substantive correction passes. Promotion integrity is not another implementation cycle.
+The substantive independent review happens before the implementation is committed and again after substantive correction passes. The exhaustive PR implementation review happens at the integration boundary. Promotion integrity is not another implementation cycle.
 
 ---
 
@@ -263,6 +325,8 @@ Likewise:
 - implementation prompts must prohibit commit/push/PR before Agent #2 approval;
 - correction prompts must prohibit commit/push/PR before re-review;
 - approval handoffs must not silently introduce unreviewed changes;
+- integration-PR prompts must require completion of configured automated review before the human merge decision;
+- integration-PR prompts must preserve the required human approval gate where the project uses one;
 - promotion prompts must not invent a new implementation-review phase.
 
 ---
@@ -294,11 +358,17 @@ Agent #2 independent review
          ↓
       MANDATORY Promotion Protection comment
          ↓
-      resolve all blocking findings in integration
+      full-scope automated PR review completes
+         ↓
+      resolve blocking findings / re-review final head as needed
+         ↓
+      required human approval
          ↓
       merge to integration
          ↓
       intentionally boring promotion PR
+         ↓
+      artifact / promotion-integrity verification only
          ↓
       production
 ```
@@ -314,6 +384,9 @@ An implementation follows this skill only when:
 - blocking findings are corrected and re-reviewed;
 - only an approved artifact is committed and pushed;
 - the integration PR receives the Promotion Protection comment immediately after creation;
+- the configured automated PR review is allowed to complete before the human merge decision;
+- substantive post-review commits receive review on the final PR head before merge;
+- the required human approval gate is satisfied before integration merge;
 - blocking findings are resolved before promotion;
 - non-blocking late discoveries become backlog issues;
 - promotion introduces no new implementation;
