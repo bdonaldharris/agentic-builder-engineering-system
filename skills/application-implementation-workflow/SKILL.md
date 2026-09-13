@@ -244,9 +244,13 @@ For repositories using Codex's current GitHub review behavior:
 - a Codex 👍 reaction indicates the automated review completed without review suggestions;
 - a Codex review/comment indicates the automated review completed with findings that must be evaluated before merge.
 
-**Every substantive PR head change invalidates the prior automated review for merge purposes.** After any substantive commit — including review corrections, conflict resolution, or an author-discovered correction — explicitly re-trigger the configured automated reviewer and require review of the final PR head before merge.
+A substantive PR head change made after a completed automated review means that completed review no longer covers the merge candidate.
 
-For Codex, re-trigger review with a new **top-level PR comment** consisting of `@codex` followed by `review`. A reply inside an existing review thread or a general mention of Codex is not a substitute for the top-level review trigger.
+Do **not** re-trigger automated review after every individual correction commit while a correction cycle is still in progress. Complete the intended corrections first. Once the PR head is stable for that correction cycle, explicitly trigger **one fresh automated review** of the resulting final head before human approval and merge.
+
+If another substantive head change occurs after that fresh review completes, repeat the same final-head review cycle.
+
+For Codex, request the fresh review with a new **top-level PR comment** consisting of `@codex` followed by `review`. A reply inside an existing review thread or a general mention of Codex is not a substitute for the top-level review trigger.
 
 ## Human approval gate
 
@@ -261,8 +265,8 @@ If legitimate findings are discovered during PR review:
 1. determine whether they block promotion;
 2. if blocking, correct them on the issue branch/integration path;
 3. repeat the normal Agent #1 correction and Agent #2 review discipline for substantive corrections;
-4. update the integration PR;
-5. explicitly re-trigger the configured automated PR reviewer for the final PR head;
+4. update the integration PR until the intended correction cycle is complete and the PR head is stable;
+5. explicitly trigger one fresh automated PR review of that stable final head;
 6. allow that review to complete;
 7. obtain the required human approval;
 8. resolve findings before merging to the integration branch.
@@ -280,8 +284,8 @@ If a project explicitly permits an implementation PR to target production direct
 Because it bypasses the integration PR boundary, it must inherit the same implementation-review protections:
 
 - full-scope production-bound implementation review;
-- completion of any configured automated PR review on the final PR head;
-- explicit re-trigger of automated review after every substantive head change;
+- completion of any configured automated PR review on the stable final PR head;
+- one fresh automated review after each completed correction cycle that changed the previously reviewed head;
 - resolution of blocking findings before merge;
 - the project's required human approval gate, where applicable.
 
@@ -349,7 +353,7 @@ Likewise:
 - correction prompts must prohibit commit/push/PR before re-review;
 - approval handoffs must not silently introduce unreviewed changes;
 - integration-PR prompts must require completion of configured automated review before the human merge decision;
-- integration-PR prompts must explicitly re-trigger automated review after every substantive PR head change;
+- integration-PR prompts must request one fresh automated review after the final substantive head change in a completed correction cycle, not after every correction commit;
 - integration-PR prompts must preserve the required human approval gate where the project uses one;
 - direct-to-production implementation prompts must preserve the same implementation-review protections rather than treating the PR as promotion;
 - promotion prompts must not invent a new implementation-review phase.
@@ -385,9 +389,9 @@ Agent #2 independent review
          ↓
       full-scope automated PR review completes
          ↓
-      resolve blocking findings
+      resolve blocking findings through a correction cycle
          ↓
-      substantive head change? → explicitly re-trigger automated review of final head
+      PR head stable? → trigger one fresh automated review of final head
          ↓
       final-head automated review completes
          ↓
@@ -402,7 +406,9 @@ Agent #2 independent review
       production
 ```
 
-A documented direct-to-production implementation exception bypasses the integration/promotion path but **not** the full-scope review, explicit re-trigger/final-head review, blocking-finding resolution, or human-approval protections.
+If the final-head review produces new blocking findings, perform another correction cycle, stabilize the head again, and request one new final-head review.
+
+A documented direct-to-production implementation exception bypasses the integration/promotion path but **not** the full-scope review, stable-final-head review, blocking-finding resolution, or human-approval protections.
 
 ---
 
@@ -416,7 +422,9 @@ An implementation follows this skill only when:
 - only an approved artifact is committed and pushed;
 - the integration PR receives the Promotion Protection comment immediately after creation;
 - the configured automated PR review is allowed to complete before the human merge decision;
-- every substantive post-review head change explicitly re-triggers automated review of the final PR head before merge;
+- correction commits may be grouped into a correction cycle without redundant automated re-review after each commit;
+- once a correction cycle is complete, the stable final PR head receives one fresh automated review before merge;
+- any substantive change after that final-head review requires another final-head review cycle;
 - the required human approval gate is satisfied before integration merge;
 - direct-to-production implementation exceptions receive the same implementation-review protections;
 - blocking findings are resolved before promotion;
