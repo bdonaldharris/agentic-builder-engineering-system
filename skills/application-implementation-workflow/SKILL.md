@@ -1,3 +1,8 @@
+---
+name: application-implementation-workflow
+description: Govern the full application implementation lifecycle for AI-assisted software construction. Use when Agent #1 is implementing an application change and the workflow must enforce no commit or push before independent Agent #2 review, correction and re-review, integration PR creation, Promotion Protection, final-head PR review, human approval, and intentionally boring promotion.
+---
+
 # Application Implementation Workflow
 
 ## Purpose
