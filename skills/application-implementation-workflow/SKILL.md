@@ -1,6 +1,6 @@
 ---
 name: application-implementation-workflow
-description: Govern the full application implementation lifecycle for AI-assisted software construction. Use when Agent #1 is implementing an application change and the workflow must enforce no commit or push before independent Agent #2 review, correction and re-review, integration PR creation, Promotion Protection, final-head PR review, human approval, and intentionally boring promotion.
+description: Govern the full application implementation lifecycle for AI-assisted software construction. Use when Agent #1 is implementing an application change and the workflow must enforce a real handoff to a separately invoked Agent #2 before commit or push, correction and re-review, integration PR creation, Promotion Protection, final-head PR review, human approval, and intentionally boring promotion.
 ---
 
 # Application Implementation Workflow
@@ -28,7 +28,7 @@ A project may assign Codex, Claude, or another capable agent to either role. The
 
 # Core invariant
 
-Implementation must be fully reviewed and corrected before the artifact leaves the integration environment.
+Implementation must be independently reviewed and corrected before the reviewed artifact is committed and allowed to advance toward integration.
 
 The integration PR is the final implementation-review boundary for the normal application path.
 
@@ -40,15 +40,31 @@ The promotion path must not become another implementation or feature-review cycl
 
 ---
 
+# Role-separation and handoff invariant
+
+Agent #1 and Agent #2 are separate workflow participants.
+
+**Agent #1 must not satisfy the Agent #2 gate by spawning, delegating to, simulating, impersonating, or internally instantiating its own reviewer.**
+
+When Agent #1 reaches the mandatory review hold point, Agent #1 must stop and return control to the workflow coordinator, builder, or calling environment so that Agent #2 can be invoked separately.
+
+The required independence is procedural, not merely conceptual. A sub-agent created and controlled by Agent #1 is still part of Agent #1's execution context for purposes of this workflow and does not constitute the required independent handoff.
+
+A compliant handoff means:
+
+1. Agent #1 leaves the implementation in the reviewable state required by this workflow;
+2. Agent #1 reports what was implemented, validation performed, and repository state;
+3. Agent #1 stops;
+4. a separately invoked Agent #2 receives the artifact and performs `independent-implementation-review`;
+5. only the resulting Agent #2 verdict may advance or return the artifact for correction.
+
+The same separation applies to correction re-review. Agent #1 must not self-authorize advancement after applying corrections.
+
+---
+
 # Branch model
 
-Every ordinary implementation issue begins from the project's designated integration branch.
-
-Examples include:
-
-- `staging`
-- `integration`
-- another explicitly documented non-production integration branch
+Every ordinary implementation issue begins from the project's designated integration branch, such as `staging`, `integration`, or another explicitly documented non-production integration branch.
 
 Agent #1 must create or switch to an issue-specific feature/fix branch before committing implementation work.
 
@@ -56,7 +72,7 @@ Do not commit implementation directly to the integration branch.
 
 The exact branch naming convention is repository-specific and should follow the repository's existing standards.
 
-A project may explicitly document a direct-to-production exception path such as `hotfix/*`. Such a path is an implementation path, not a promotion path, and must preserve the review guarantees defined later in this skill.
+A project may explicitly document a direct-to-production exception path such as `hotfix/*`. Such a path is an implementation path, not a promotion path, and must preserve the review guarantees defined by this skill.
 
 ---
 
@@ -67,7 +83,7 @@ Agent #1 performs the implementation locally.
 Agent #1 must:
 
 1. inspect the issue and current repository state;
-2. inspect the relevant architecture and existing patterns before changing code;
+2. inspect relevant architecture and existing patterns before changing code;
 3. create/use the appropriate issue branch from the current integration branch;
 4. implement only the issue scope;
 5. add or update appropriate tests and contracts;
@@ -81,15 +97,21 @@ At the end of Phase 1, Agent #1 must **not**:
 
 - commit;
 - push;
-- open a pull request.
+- open a pull request;
+- invoke or manufacture its own Agent #2 review;
+- continue into the review phase under a different persona or sub-agent.
 
-The implementation must remain locally reviewable until Agent #2 completes an independent review.
+The implementation must remain locally reviewable.
+
+Agent #1 must stop and hand control back for a separately invoked Agent #2 review.
 
 ---
 
 # Phase 2 — Agent #2 independent review
 
-Agent #2 independently reviews the actual implementation, not merely Agent #1's summary.
+Agent #2 is invoked separately from Agent #1 and independently reviews the actual implementation, not merely Agent #1's summary.
+
+The review procedure must follow `independent-implementation-review`.
 
 Agent #2 must inspect as appropriate:
 
@@ -113,11 +135,7 @@ Agent #2 returns one of:
 - **Approved**
 - **Changes Required**
 
-Findings should be classified according to the project's review conventions, commonly:
-
-- Blocking
-- Non-blocking
-- Informational
+Findings should be classified according to the project's review conventions, commonly Blocking, Non-blocking, or Informational.
 
 Do not manufacture findings merely to produce a review.
 
@@ -127,20 +145,22 @@ Do not manufacture findings merely to produce a review.
 
 If Agent #2 returns **Changes Required**:
 
-1. Agent #1 applies only the required corrections and any explicitly accepted non-blocking improvements.
-2. Agent #1 re-runs appropriate validation.
-3. Agent #1 still does **not** commit, push, or open a PR.
-4. Agent #2 re-reviews the corrected local implementation.
+1. control returns to Agent #1;
+2. Agent #1 applies only the required corrections and any explicitly accepted non-blocking improvements;
+3. Agent #1 re-runs appropriate validation;
+4. Agent #1 still does **not** commit, push, or open a PR;
+5. Agent #1 stops again and hands control back;
+6. a separately invoked Agent #2 re-reviews the corrected local implementation.
 
-Repeat this loop until Agent #2 explicitly approves the implementation.
+Repeat this handoff loop until Agent #2 explicitly approves the implementation.
 
-A correction pass does not grant permission to widen the issue scope.
+A correction pass does not grant permission to widen the issue scope or to self-approve the corrected artifact.
 
 ---
 
 # Phase 4 — Commit, push, and integration PR
 
-Only after Agent #2 approval may Agent #1:
+Only after a separately invoked Agent #2 approval may Agent #1:
 
 1. verify the approved working-tree state has not changed;
 2. stage only reviewed files;
@@ -148,7 +168,7 @@ Only after Agent #2 approval may Agent #1:
 4. push the issue branch;
 5. open a pull request targeting the designated integration branch.
 
-If a substantive code change becomes necessary after Agent #2 approval but before the commit/PR is created, stop. The changed artifact must return through review before proceeding.
+If a substantive code change becomes necessary after Agent #2 approval but before the commit/PR is created, stop. The changed artifact must return through the Agent #1 → separate Agent #2 review boundary before proceeding.
 
 The PR must describe the reviewed implementation, validation, and issue scope accurately.
 
@@ -156,17 +176,11 @@ The PR must describe the reviewed implementation, validation, and issue scope ac
 
 # Phase 5 — Mandatory Promotion Protection comment
 
-**Immediately after every implementation PR to the integration branch is created, Agent #1 must post the canonical Promotion Protection comment below.**
-
-This step is mandatory.
+Immediately after every implementation PR to the integration branch is created, Agent #1 must post the canonical Promotion Protection comment.
 
 A commit/push/PR handoff that omits this comment is incomplete.
 
-The purpose is to establish the implementation PR as the final implementation-review boundary, instruct PR reviewers to review the implementation as production-bound software, and prevent defects from being knowingly carried into the promotion PR.
-
 ## Canonical Promotion Protection comment
-
-Post this as a top-level PR comment, replacing `<ISSUE>` with the governing issue reference when appropriate:
 
 ```markdown
 ## Promotion Protection
@@ -206,7 +220,7 @@ If a new issue is discovered after this PR reaches the integration branch:
 **Promotion expectation: zero gum on the bottom of the shoe.**
 ```
 
-Projects may replace the generic words `integration branch` and `production` with concrete branch names such as `staging` and `main`, but must preserve the intent and protection boundary.
+Projects may replace generic branch/environment wording with concrete names while preserving the protection boundary.
 
 ---
 
@@ -214,87 +228,51 @@ Projects may replace the generic words `integration branch` and `production` wit
 
 The integration PR is the last place where implementation findings are expected to be discovered and resolved.
 
-## Full-scope implementation review
+Use `integration-pr-review` for this boundary.
 
-A configured PR reviewer must review the implementation as production-bound software, not merely verify the issue's acceptance criteria.
+A configured PR reviewer must review the implementation as production-bound software, not merely verify acceptance criteria.
 
-The review should inspect, where applicable:
-
-- correctness and edge cases;
-- architecture and layering;
-- repository-pattern consistency;
-- API, domain, and runtime contract consistency;
-- authorization, security, and privacy;
-- persistence and data-access behavior;
-- performance, including N+1 queries and avoidable database or network round trips;
-- concurrency and idempotency;
-- failure handling and operational behavior;
-- OpenAPI and documentation drift;
-- regression risk and adjacent-system effects;
-- missing, weak, or misleading tests;
-- duplicated functionality;
-- unnecessary divergence from established repository patterns;
-- scope discipline.
-
-Successful acceptance-criteria coverage is not, by itself, sufficient evidence of implementation quality.
-
-## Automated-review completion hold point
-
-If the repository has a configured automated PR reviewer, **do not merge the integration PR while that review is still in progress**.
-
-The automated review must be allowed to complete on the PR artifact before the human merge decision is made.
+If the repository has a configured automated PR reviewer, do not merge while that review is still in progress.
 
 For repositories using Codex's current GitHub review behavior:
 
 - a Codex 👍 reaction indicates the automated review completed without review suggestions;
 - a Codex review/comment indicates the automated review completed with findings that must be evaluated before merge.
 
-A substantive PR head change made after a completed automated review means that completed review no longer covers the merge candidate.
+A substantive PR head change after completed automated review means that review no longer covers the merge candidate.
 
-Do **not** re-trigger automated review after every individual correction commit while a correction cycle is still in progress. Complete the intended corrections first. Once the PR head is stable for that correction cycle, explicitly trigger **one fresh automated review** of the resulting final head before human approval and merge.
+Do not re-trigger automated review after every individual correction commit. Finish the correction cycle, stabilize the PR head, then explicitly request one fresh automated review of the final head.
 
-If another substantive head change occurs after that fresh review completes, repeat the same final-head review cycle.
+For Codex, request the fresh review with a new top-level PR comment consisting of:
 
-For Codex, request the fresh review with a new **top-level PR comment** consisting of `@codex` followed by `review`. A reply inside an existing review thread or a general mention of Codex is not a substitute for the top-level review trigger.
+```text
+@codex review
+```
 
-## Human approval gate
+A reply inside an existing review thread or a general mention is not a substitute.
 
-After the automated review completes and all blocking findings are resolved, the integration PR requires the project's designated human approval before merge.
+After automated review completes and all blocking findings are resolved, obtain the project's required human approval.
 
-Where GitHub branch protection or rulesets are available, configure the integration branch to require at least **one qualifying approving review** before merge so this gate is technically enforced rather than dependent on memory.
+Do not treat an automated reaction as the required human approval.
 
-Do not treat an automated 👍 reaction as the required human approval.
-
-If legitimate findings are discovered during PR review:
-
-1. determine whether they block promotion;
-2. if blocking, correct them on the issue branch/integration path;
-3. repeat the normal Agent #1 correction and Agent #2 review discipline for substantive corrections;
-4. update the integration PR until the intended correction cycle is complete and the PR head is stable;
-5. explicitly trigger one fresh automated PR review of that stable final head;
-6. allow that review to complete;
-7. obtain the required human approval;
-8. resolve findings before merging to the integration branch.
-
-Do not knowingly merge blocking implementation defects into the integration branch with the intention of fixing them during promotion.
-
-If a discovered issue is genuinely non-blocking and not part of the current issue's acceptance boundary, create a follow-up backlog issue rather than expanding the promotion PR.
+If substantive PR-review corrections are needed, they return through the same Agent #1 → separate Agent #2 correction/re-review discipline before the PR head is considered stable.
 
 ---
 
 # Direct-to-production implementation exceptions
 
-If a project explicitly permits an implementation PR to target production directly — for example, an emergency `hotfix/*` path — that PR is **not** a promotion PR.
+If a project explicitly permits an implementation PR to target production directly, that PR is not a promotion PR.
 
-Because it bypasses the integration PR boundary, it must inherit the same implementation-review protections:
+Because it bypasses the integration PR boundary, it must inherit the same protections:
 
 - full-scope production-bound implementation review;
-- completion of any configured automated PR review on the stable final PR head;
-- one fresh automated review after each completed correction cycle that changed the previously reviewed head;
+- completion of configured automated PR review on the stable final head;
+- fresh automated review after substantive correction cycles;
 - resolution of blocking findings before merge;
-- the project's required human approval gate, where applicable.
+- the project's required human approval gate;
+- separate Agent #2 review for substantive implementation corrections.
 
-Do not relax implementation review merely because the change is urgent or because the PR targets the production branch.
+Urgency does not erase role separation or review independence.
 
 ---
 
@@ -304,64 +282,43 @@ Promotion moves an already-reviewed integration artifact to production.
 
 The promotion PR should be intentionally boring.
 
-It must contain:
+It must contain no new implementation, speculative cleanup, opportunistic refactoring, newly invented feature behavior, or known corrective work that should have been resolved in integration.
 
-- no new implementation;
-- no speculative cleanup;
-- no opportunistic refactoring;
-- no newly invented feature behavior;
-- no known corrective work that should have been resolved in integration.
-
-The purpose of the promotion PR is to verify that the reviewed artifact leaving the integration branch is the artifact intended for production.
-
-Promotion review is limited to artifact and promotion integrity: expected delta, source branch correctness, absence of unexpected implementation changes, and safe promotion of the reviewed integration artifact.
-
-## No invented Agent #2 promotion-review step
+Promotion review is limited to artifact and promotion integrity.
 
 This workflow does **not** include a mandatory second Agent #2 feature review of the promotion PR.
 
-Do not invent an Agent #2 promotion-PR review phase unless a project explicitly adopts one for a separate reason.
-
-The substantive independent review happens before the implementation is committed and again after substantive correction passes. The exhaustive PR implementation review happens at the integration boundary. Promotion integrity is not another implementation cycle.
+Do not invent an Agent #2 promotion-review phase unless a project explicitly adopts one for a separate reason.
 
 ---
 
 # Blocking vs. follow-up findings
 
-When a new issue is discovered after integration:
-
-## Blocking
-
 A finding blocks promotion when production would knowingly receive an incorrect, unsafe, contract-breaking, materially incomplete, or operationally unacceptable artifact.
 
 Blocking findings return through the implementation/review workflow before promotion.
 
-## Non-blocking
-
-A legitimate improvement that does not invalidate the approved artifact should become a separate backlog issue.
-
-Do not attach unrelated cleanup to the promotion PR merely because it was discovered late.
+A legitimate improvement that does not invalidate the approved artifact should become a separate backlog issue rather than promotion work.
 
 ---
 
 # Prompt-generation requirement
 
-Any agent or coordinator generating workflow prompts from this skill must preserve the required hold points.
+Any agent or coordinator generating workflow prompts from this skill must preserve the required hold points and handoff boundary.
 
 In particular:
 
-> **Whenever generating the Agent #1 commit/push/PR prompt, the Promotion Protection section is mandatory. A prompt that omits it is incomplete.**
-
-Likewise:
-
-- implementation prompts must prohibit commit/push/PR before Agent #2 approval;
-- correction prompts must prohibit commit/push/PR before re-review;
+- implementation prompts must prohibit commit/push/PR before separate Agent #2 approval;
+- Agent #1 prompts must explicitly stop at the review handoff and must not instruct Agent #1 to spawn or simulate Agent #2;
+- Agent #2 review must be invoked separately;
+- correction prompts must prohibit commit/push/PR before separate re-review;
 - approval handoffs must not silently introduce unreviewed changes;
 - integration-PR prompts must require completion of configured automated review before the human merge decision;
 - integration-PR prompts must request one fresh automated review after the final substantive head change in a completed correction cycle, not after every correction commit;
-- integration-PR prompts must preserve the required human approval gate where the project uses one;
-- direct-to-production implementation prompts must preserve the same implementation-review protections rather than treating the PR as promotion;
+- direct-to-production implementation prompts must preserve the same review protections;
 - promotion prompts must not invent a new implementation-review phase.
+
+Whenever generating the Agent #1 commit/push/PR prompt, the Promotion Protection section is mandatory.
 
 ---
 
@@ -374,46 +331,40 @@ Agent #1 implements locally
   ↓
 NO COMMIT / NO PUSH / NO PR
   ↓
-Agent #2 independent review
+AGENT #1 STOPS
+  ↓
+External handoff / coordinator regains control
+  ↓
+Separately invoked Agent #2 independent review
   ├── Changes Required
+  │      ↓
+  │   hand back to Agent #1
   │      ↓
   │   Agent #1 corrections
   │      ↓
-  │   Agent #2 re-review
+  │   AGENT #1 STOPS
+  │      ↓
+  │   separately invoked Agent #2 re-review
   │      └── repeat until Approved
   │
   └── Approved
          ↓
-      Agent #1 commit
+      hand back to Agent #1
          ↓
-      push issue branch
+      commit / push / PR → integration
          ↓
-      PR → integration branch
+      Promotion Protection
          ↓
-      MANDATORY Promotion Protection comment
-         ↓
-      full-scope automated PR review completes
-         ↓
-      resolve blocking findings through a correction cycle
-         ↓
-      PR head stable? → trigger one fresh automated review of final head
-         ↓
-      final-head automated review completes
+      integration-pr-review
          ↓
       required human approval
          ↓
-      merge to integration
+      integration
          ↓
-      intentionally boring promotion PR
-         ↓
-      artifact / promotion-integrity verification only
+      intentionally boring promotion
          ↓
       production
 ```
-
-If the final-head review produces new blocking findings, perform another correction cycle, stabilize the head again, and request one new final-head review.
-
-A documented direct-to-production implementation exception bypasses the integration/promotion path but **not** the full-scope review, stable-final-head review, blocking-finding resolution, or human-approval protections.
 
 ---
 
@@ -422,16 +373,15 @@ A documented direct-to-production implementation exception bypasses the integrat
 An implementation follows this skill only when:
 
 - Agent #1 does not commit before independent review;
+- Agent #1 stops at the review boundary rather than spawning, simulating, or controlling Agent #2;
+- Agent #2 is separately invoked after the handoff;
 - Agent #2 reviews the actual local implementation;
-- blocking findings are corrected and re-reviewed;
+- blocking findings are corrected by Agent #1 and separately re-reviewed by Agent #2;
 - only an approved artifact is committed and pushed;
-- the integration PR receives the Promotion Protection comment immediately after creation;
-- the configured automated PR review is allowed to complete before the human merge decision;
-- correction commits may be grouped into a correction cycle without redundant automated re-review after each commit;
-- once a correction cycle is complete, the stable final PR head receives one fresh automated review before merge;
-- any substantive change after that final-head review requires another final-head review cycle;
+- the integration PR receives Promotion Protection immediately after creation;
+- configured automated PR review is allowed to complete;
+- the stable final PR head receives fresh automated review after substantive changes;
 - the required human approval gate is satisfied before integration merge;
-- direct-to-production implementation exceptions receive the same implementation-review protections;
 - blocking findings are resolved before promotion;
 - non-blocking late discoveries become backlog issues;
 - promotion introduces no new implementation;
