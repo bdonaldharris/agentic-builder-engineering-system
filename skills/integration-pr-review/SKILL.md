@@ -182,13 +182,54 @@ A substantive PR head change invalidates a completed automated review of the pre
 
 Once the correction cycle is complete and the PR head is stable, explicitly request one fresh automated review of that final head when the repository's reviewer requires an explicit retrigger.
 
-For Codex, use a new top-level PR comment containing:
+For Codex, the retrigger must be a **new top-level PR comment using the Canonical Final-Head Codex Review Request below**.
 
-```text
+`@codex review` by itself is only a trigger and is not the complete review request required by this workflow.
+
+A reply inside an existing review thread, an edited prior comment, or a general Codex mention is not a substitute for the top-level final-head review request.
+
+## Canonical Final-Head Codex Review Request
+
+Use this template for the final-head Codex review after a substantive correction cycle. Replace `<INTEGRATION_BRANCH>` with the repository's designated integration branch, such as `staging` or `integration`.
+
+```markdown
 @codex review
+
+Perform the **final production-bound integration review** of this PR against the current stable head.
+
+This PR is the final implementation-review boundary before merge to `<INTEGRATION_BRANCH>`.
+
+Review the complete changed behavior and relevant surrounding system for:
+
+- correctness and edge cases;
+- architecture and repository-pattern consistency;
+- API, domain, persistence, and runtime contract consistency;
+- authorization, security, and privacy;
+- data-access and network efficiency, including N+1 queries and unnecessary round trips;
+- concurrency and idempotency where applicable;
+- failure handling and operational behavior;
+- regression risk and adjacent-system effects;
+- OpenAPI, schema, and documentation drift;
+- missing, weak, or misleading tests;
+- duplicated functionality or unnecessary divergence from established patterns;
+- unrequested scope expansion.
+
+Classify findings by impact.
+
+**Blocking:** defects that would make the artifact incorrect, unsafe, contract-breaking, materially incomplete, regression-causing, or operationally unacceptable in `<INTEGRATION_BRANCH>`.
+
+**Non-blocking:** legitimate improvements that do not prevent this artifact from advancing. Do not expand the current implementation unnecessarily for non-blocking findings; recommend follow-up backlog work when appropriate.
+
+**Informational:** useful context that does not affect merge eligibility.
+
+This review must cover the **current PR head**. Do not review only against acceptance criteria, and do not treat passing tests as sufficient evidence of implementation quality.
+
+Promotion Protection applies: all blocking implementation work must be resolved here before merge to `<INTEGRATION_BRANCH>`. Do not knowingly defer corrective implementation to promotion.
+
+Promotion must remain an artifact-integrity step with **zero gum on the bottom of the shoe**.
 ```
 
-A reply inside an existing review thread, an edited prior comment, or a general Codex mention is not a substitute for the top-level review trigger.
+The canonical template is the authoritative Codex final-head review instruction. Do not recreate or paraphrase it in per-PR prompts unless repository-specific substitution is required.
 
 Wait for that review to complete.
 
@@ -196,10 +237,12 @@ If the final-head review produces new blocking findings:
 
 1. perform another correction cycle;
 2. stabilize the PR head again;
-3. request one new final-head review;
+3. post one new Canonical Final-Head Codex Review Request;
 4. repeat until no blocking findings remain.
 
 If another substantive change occurs after the final-head review completes, the review no longer covers the merge candidate and must be repeated.
+
+Do not post a second final-head request while an existing Codex review of the same current head is still in progress.
 
 ---
 
@@ -269,6 +312,8 @@ It must therefore receive:
 - resolution of blocking findings;
 - required human approval.
 
+When Codex is the configured automated reviewer, use the same canonical final-head review request with the target production branch substituted for `<INTEGRATION_BRANCH>`.
+
 Urgency does not erase the implementation-review boundary.
 
 ---
@@ -283,7 +328,8 @@ This skill does not:
 - require redundant automated review after every correction commit;
 - invent a mandatory Agent #2 review of the promotion PR;
 - turn non-blocking discoveries into promotion work;
-- treat a successful automated review as the required human approval.
+- treat a successful automated review as the required human approval;
+- require callers to reconstruct the final-head Codex review instructions outside this skill.
 
 ---
 
@@ -309,7 +355,7 @@ Blocking findings?
    │     ↓
    │  stabilize PR head
    │     ↓
-   │  trigger one fresh automated review
+   │  post Canonical Final-Head Codex Review Request
    │     └── repeat if new blocking findings appear
    │
    └── No
@@ -337,6 +383,8 @@ An integration PR follows this skill only when:
 - blocking findings are resolved before merge;
 - correction cycles are completed before requesting another automated review;
 - one fresh automated review covers the stable final head after substantive changes;
+- when Codex is used, the fresh review is requested with the canonical final-head review template rather than a bare trigger;
+- duplicate final-head requests are not posted while the current-head review is still running;
 - any later substantive head change invalidates that review and triggers another final-head cycle;
 - required human approval is obtained;
 - no blocking corrective work is intentionally carried into promotion;
