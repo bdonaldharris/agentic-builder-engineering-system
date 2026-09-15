@@ -1,6 +1,6 @@
 ---
 name: integration-pr-review
-description: Review and gate an implementation pull request at the integration boundary. Use for staging or integration PRs to verify the production-bound artifact, evaluate blocking findings, enforce automated-review completion on the stable final head, require human approval where applicable, and prevent corrective work from leaking into promotion.
+description: Review and gate an implementation pull request at the integration boundary. Use for staging or integration PRs to verify the production-bound artifact, evaluate blocking findings, enforce automated-review completion on the stable final head, require human approval where applicable, prevent corrective work from leaking into promotion, and drive review convergence instead of serial blocker discovery.
 ---
 
 # Integration PR Review
@@ -9,7 +9,7 @@ description: Review and gate an implementation pull request at the integration b
 
 This skill defines the canonical review and merge-gating procedure for implementation pull requests targeting a project's designated integration branch.
 
-It exists to ensure that the committed pull-request artifact receives a complete production-bound review before integration merge, that automated review covers the actual final PR head, and that blocking findings are resolved before promotion.
+It exists to ensure that the committed pull-request artifact receives a complete production-bound review before integration merge, that automated review covers the actual final PR head, that blocking findings are resolved before promotion, and that review cycles converge rather than repeatedly surfacing avoidable blockers one head at a time.
 
 This skill is application-agnostic. Repository-specific branch names, CI systems, and automated reviewers may vary.
 
@@ -17,11 +17,7 @@ This skill is application-agnostic. Repository-specific branch names, CI systems
 
 # Applicability
 
-Use this skill for implementation pull requests targeting an integration branch such as:
-
-- `staging`;
-- `integration`;
-- another explicitly designated non-production integration branch.
+Use this skill for implementation pull requests targeting an integration branch such as `staging`, `integration`, or another explicitly designated non-production integration branch.
 
 A direct-to-production implementation PR, such as an explicitly permitted emergency hotfix, should inherit the same implementation-review protections because it bypasses the normal integration boundary.
 
@@ -36,6 +32,8 @@ The integration PR is the final implementation-review boundary.
 The merge candidate must be reviewed as production-bound software, and the completed review must cover the actual stable PR head that will be merged.
 
 Do not knowingly merge blocking implementation defects into integration with the intention of fixing them during promotion.
+
+Review should converge toward a stable artifact. Do not design the process around discovering one avoidable blocker per PR head.
 
 **Promotion expectation: zero gum on the bottom of the shoe.**
 
@@ -53,6 +51,8 @@ The normal application path is:
 4. This skill governs review of the committed PR artifact and the merge decision.
 
 Local Agent #2 review and integration PR review are separate engineering controls over different artifacts and lifecycle stages.
+
+When integration-PR review discovers blocking findings, the subsequent Agent #2 correction review must use the post-PR **whole-artifact convergence sweep** defined by `independent-implementation-review` before the corrected artifact is pushed as the next stable review candidate.
 
 ---
 
@@ -104,6 +104,8 @@ Inspect, where applicable:
 
 Passing tests and satisfied acceptance criteria do not, by themselves, establish implementation quality.
 
+The review should attempt to complete its analysis of the current artifact before returning findings. Do not intentionally stop after the first discovered defect when additional relevant blocking findings are already identifiable in the same pass.
+
 ---
 
 # Phase 3 — Automated review completion gate
@@ -129,27 +131,17 @@ Every legitimate finding must be classified according to its effect on merge eli
 
 ## Blocking
 
-A finding is blocking when merging the PR would knowingly place an incorrect, unsafe, contract-breaking, materially incomplete, or operationally unacceptable artifact into integration.
+A finding is blocking when merging the PR would knowingly place an incorrect, unsafe, contract-breaking, materially incomplete, regression-causing, or operationally unacceptable artifact into integration.
 
 Blocking findings must be resolved before merge.
-
-Examples may include:
-
-- incorrect runtime behavior;
-- broken authorization or security boundaries;
-- API or persistence contract mismatch;
-- missing required behavior;
-- material regression;
-- unsafe migration behavior;
-- severe performance defect;
-- unhandled failure mode with material impact;
-- tests that conceal a real defect rather than validate behavior.
 
 ## Non-blocking
 
 A legitimate improvement is non-blocking when the current artifact remains correct and production-acceptable without it.
 
 If it is outside the current issue boundary, create or recommend a follow-up backlog issue rather than expanding the implementation unnecessarily.
+
+An already-adjudicated non-blocking finding should not be relitigated as blocking on a later head merely through stronger wording. Reclassification requires new evidence of a materially different failure mechanism or impact.
 
 ## Informational
 
@@ -163,16 +155,19 @@ Do not manufacture findings merely to make the review appear rigorous.
 
 When blocking findings require substantive implementation changes:
 
-1. return the change through the normal Agent #1 correction and Agent #2 independent re-review discipline;
-2. apply corrections on the implementation branch;
+1. return the change through the normal Agent #1 correction and separate Agent #2 re-review discipline;
+2. apply all accepted blocking corrections on the implementation branch;
 3. run appropriate validation;
-4. push the completed correction cycle to the PR;
-5. allow CI and repository checks to settle;
-6. establish the new stable PR head.
+4. before approval, Agent #2 performs the post-PR whole-artifact convergence sweep defined by `independent-implementation-review`;
+5. consolidate any additional presently identifiable blocking findings into that same review;
+6. repeat Agent #1 correction → separate Agent #2 convergence review until Agent #2 approves the full current artifact;
+7. push the completed correction cycle to the PR;
+8. allow CI and repository checks to settle;
+9. establish the new stable PR head.
 
 Do not trigger a fresh automated PR review after every individual correction commit while the correction cycle is still in progress.
 
-Complete the intended corrections first.
+Complete and independently converge the correction cycle first.
 
 ---
 
@@ -180,7 +175,7 @@ Complete the intended corrections first.
 
 A substantive PR head change invalidates a completed automated review of the previous head for merge-gating purposes.
 
-Once the correction cycle is complete and the PR head is stable, explicitly request one fresh automated review of that final head when the repository's reviewer requires an explicit retrigger.
+Once the correction cycle is complete, Agent #2 has approved the converged artifact, and the PR head is stable, explicitly request one fresh automated review of that final head when the repository's reviewer requires an explicit retrigger.
 
 For Codex, the retrigger must be a **new top-level PR comment using the Canonical Final-Head Codex Review Request below**.
 
@@ -224,6 +219,10 @@ Classify findings by impact.
 
 This review must cover the **current PR head**. Do not review only against acceptance criteria, and do not treat passing tests as sufficient evidence of implementation quality.
 
+**Complete the review of the full current artifact before posting findings. Consolidate all presently identifiable findings from this review into one review pass rather than intentionally stopping after the first discovered defects.**
+
+Do not relitigate previously adjudicated non-blocking findings unless new evidence establishes a materially different failure mechanism or impact.
+
 Promotion Protection applies: all blocking implementation work must be resolved here before merge to `<INTEGRATION_BRANCH>`. Do not knowingly defer corrective implementation to promotion.
 
 Promotion must remain an artifact-integrity step with **zero gum on the bottom of the shoe**.
@@ -236,13 +235,16 @@ Wait for that review to complete.
 If the final-head review produces new blocking findings:
 
 1. perform another correction cycle;
-2. stabilize the PR head again;
-3. post one new Canonical Final-Head Codex Review Request;
-4. repeat until no blocking findings remain.
+2. run a new whole-artifact Agent #2 convergence sweep;
+3. stabilize the PR head again only after Agent #2 approval;
+4. post one new Canonical Final-Head Codex Review Request;
+5. repeat until no blocking findings remain.
 
 If another substantive change occurs after the final-head review completes, the review no longer covers the merge candidate and must be repeated.
 
 Do not post a second final-head request while an existing Codex review of the same current head is still in progress.
+
+No workflow can guarantee that an automated reviewer will identify every defect in one pass. The purpose of the consolidation and convergence rules is to avoid process-induced narrowness and reduce serial blocker discovery, not to claim exhaustive mathematical review.
 
 ---
 
@@ -265,7 +267,7 @@ The integration PR is eligible to merge only when all applicable conditions are 
 - CI and required checks are acceptable;
 - configured automated review has completed on the stable final head;
 - all blocking findings are resolved;
-- substantive corrections have completed Agent #2 re-review where required by the governing implementation workflow;
+- substantive PR corrections have received separate Agent #2 whole-artifact convergence review;
 - the required human approval is present;
 - no known implementation defect is being intentionally deferred to promotion;
 - no unreviewed substantive change occurred after the final review.
@@ -282,17 +284,9 @@ Do not imply merge readiness when a required review is still running, stale, or 
 
 # Promotion Protection
 
-This skill protects the boundary between implementation and promotion.
-
 After integration merge, ordinary promotion should move the already-reviewed integration artifact toward production without new implementation.
 
-Do not use a promotion PR to perform:
-
-- corrective implementation;
-- opportunistic refactoring;
-- acceptance-criteria completion;
-- newly discovered feature behavior;
-- another full feature-review cycle.
+Do not use a promotion PR to perform corrective implementation, opportunistic refactoring, acceptance-criteria completion, newly discovered feature behavior, or another full feature-review cycle.
 
 If a blocking defect is discovered after integration merge, fix it through the normal implementation/review workflow before promotion.
 
@@ -307,6 +301,7 @@ If a project explicitly permits an implementation PR to target production direct
 It must therefore receive:
 
 - full-scope production-bound implementation review;
+- separate Agent #2 convergence review after substantive PR corrections;
 - configured automated review of the stable final head;
 - a fresh final-head review after substantive correction cycles;
 - resolution of blocking findings;
@@ -326,6 +321,7 @@ This skill does not:
 - replace Agent #2 local independent review;
 - define repository-specific branch protection configuration;
 - require redundant automated review after every correction commit;
+- claim any reviewer can guarantee exhaustive defect discovery in one pass;
 - invent a mandatory Agent #2 review of the promotion PR;
 - turn non-blocking discoveries into promotion work;
 - treat a successful automated review as the required human approval;
@@ -349,14 +345,22 @@ Blocking findings?
    │     ↓
    │  Agent #1 correction cycle
    │     ↓
-   │  Agent #2 re-review where required
+   │  separate Agent #2 correction review
    │     ↓
-   │  push completed correction cycle
+   │  whole-artifact convergence sweep
    │     ↓
-   │  stabilize PR head
+   │  all presently known blockers consolidated
    │     ↓
-   │  post Canonical Final-Head Codex Review Request
-   │     └── repeat if new blocking findings appear
+   │  Agent #2 Approved?
+   │     ├── No → repeat correction/convergence
+   │     └── Yes
+   │            ↓
+   │         push completed correction cycle
+   │            ↓
+   │         stabilize PR head
+   │            ↓
+   │         post Canonical Final-Head Codex Review Request
+   │            └── repeat if new blocking findings appear
    │
    └── No
           ↓
@@ -381,7 +385,8 @@ An integration PR follows this skill only when:
 - review considers production-bound behavior rather than acceptance criteria alone;
 - configured automated review is allowed to complete;
 - blocking findings are resolved before merge;
-- correction cycles are completed before requesting another automated review;
+- correction cycles are completed and receive whole-artifact convergence review before another stable head is presented;
+- presently identifiable blockers are consolidated rather than intentionally serialized;
 - one fresh automated review covers the stable final head after substantive changes;
 - when Codex is used, the fresh review is requested with the canonical final-head review template rather than a bare trigger;
 - duplicate final-head requests are not posted while the current-head review is still running;
