@@ -1,3 +1,8 @@
+---
+name: integration-pr-review
+description: Review and gate an implementation pull request at the integration boundary. Use for staging or integration PRs to verify the production-bound artifact, evaluate blocking findings, enforce automated-review completion on the stable final head, require human approval where applicable, and prevent corrective work from leaking into promotion.
+---
+
 # Integration PR Review
 
 ## Purpose
