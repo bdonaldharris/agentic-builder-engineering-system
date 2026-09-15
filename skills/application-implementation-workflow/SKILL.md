@@ -228,32 +228,17 @@ Projects may replace generic branch/environment wording with concrete names whil
 
 The integration PR is the last place where implementation findings are expected to be discovered and resolved.
 
-Use `integration-pr-review` for this boundary.
+Use `integration-pr-review` for this boundary. That skill is the authoritative source for:
 
-A configured PR reviewer must review the implementation as production-bound software, not merely verify acceptance criteria.
+- production-bound PR review scope;
+- automated-review completion behavior;
+- blocking/non-blocking classification;
+- correction-cycle handling;
+- stable-final-head review;
+- the canonical final-head Codex review request;
+- human approval and merge eligibility.
 
-If the repository has a configured automated PR reviewer, do not merge while that review is still in progress.
-
-For repositories using Codex's current GitHub review behavior:
-
-- a Codex 👍 reaction indicates the automated review completed without review suggestions;
-- a Codex review/comment indicates the automated review completed with findings that must be evaluated before merge.
-
-A substantive PR head change after completed automated review means that review no longer covers the merge candidate.
-
-Do not re-trigger automated review after every individual correction commit. Finish the correction cycle, stabilize the PR head, then explicitly request one fresh automated review of the final head.
-
-For Codex, request the fresh review with a new top-level PR comment consisting of:
-
-```text
-@codex review
-```
-
-A reply inside an existing review thread or a general mention is not a substitute.
-
-After automated review completes and all blocking findings are resolved, obtain the project's required human approval.
-
-Do not treat an automated reaction as the required human approval.
+Do not reproduce or paraphrase the canonical final-head Codex review request in this skill or in per-implementation prompts. Invoke `integration-pr-review` and use its canonical template.
 
 If substantive PR-review corrections are needed, they return through the same Agent #1 → separate Agent #2 correction/re-review discipline before the PR head is considered stable.
 
@@ -271,6 +256,8 @@ Because it bypasses the integration PR boundary, it must inherit the same protec
 - resolution of blocking findings before merge;
 - the project's required human approval gate;
 - separate Agent #2 review for substantive implementation corrections.
+
+Use `integration-pr-review` to govern the final-head review and merge gate for such a direct-to-production implementation path as well.
 
 Urgency does not erase role separation or review independence.
 
@@ -313,8 +300,7 @@ In particular:
 - Agent #2 review must be invoked separately;
 - correction prompts must prohibit commit/push/PR before separate re-review;
 - approval handoffs must not silently introduce unreviewed changes;
-- integration-PR prompts must require completion of configured automated review before the human merge decision;
-- integration-PR prompts must request one fresh automated review after the final substantive head change in a completed correction cycle, not after every correction commit;
+- integration-PR prompts must invoke `integration-pr-review` rather than reconstruct its review contract;
 - direct-to-production implementation prompts must preserve the same review protections;
 - promotion prompts must not invent a new implementation-review phase.
 
@@ -379,8 +365,7 @@ An implementation follows this skill only when:
 - blocking findings are corrected by Agent #1 and separately re-reviewed by Agent #2;
 - only an approved artifact is committed and pushed;
 - the integration PR receives Promotion Protection immediately after creation;
-- configured automated PR review is allowed to complete;
-- the stable final PR head receives fresh automated review after substantive changes;
+- integration PR review follows `integration-pr-review`, including its stable-final-head review contract and canonical Codex review request when applicable;
 - the required human approval gate is satisfied before integration merge;
 - blocking findings are resolved before promotion;
 - non-blocking late discoveries become backlog issues;
