@@ -1,6 +1,6 @@
 ---
 name: independent-implementation-review
-description: Perform the independent Agent #2 review of an uncommitted implementation artifact. Use only when Agent #2 has been invoked separately from Agent #1 after an explicit handoff; inspect the actual diff and runtime behavior, evaluate architecture, contracts, security, data access, failure handling, tests, regressions, and scope, classify concrete findings, and return Approved or Changes Required without modifying the implementation.
+description: Perform the independent Agent #2 review of an uncommitted implementation artifact. Use only when Agent #2 has been invoked separately from Agent #1 after an explicit handoff; inspect the actual diff and runtime behavior, evaluate architecture, contracts, security, data access, failure handling, tests, regressions, and scope, classify concrete findings, and return Approved or Changes Required without modifying the implementation. After PR-discovered blocking corrections, finish with a whole-artifact convergence sweep before approval.
 ---
 
 # Independent Implementation Review
@@ -74,6 +74,7 @@ The reviewer must:
 - avoid inventing findings merely to appear thorough;
 - avoid expanding issue scope without a legitimate correctness, safety, contract, or regression reason;
 - classify findings by impact;
+- consolidate presently identifiable blocking findings rather than intentionally serializing them across review cycles;
 - return an explicit verdict.
 
 The reviewer must not approve solely because tests pass, the code compiles, or the implementation appears plausible.
@@ -215,6 +216,8 @@ A finding is non-blocking when it is legitimate and valuable but does not invali
 
 Do not use Non-blocking as a place to park personal preferences.
 
+An already-adjudicated non-blocking finding should not be repeatedly promoted to blocking in later review cycles unless new evidence establishes a materially different failure mechanism or impact.
+
 ## Informational
 
 Informational notes provide useful context without requesting a change. Use them sparingly.
@@ -257,6 +260,27 @@ The reviewer must re-review the actual corrected artifact and:
 Agent #1 must not apply corrections and then invoke an internal reviewer to self-satisfy the re-review gate.
 
 A correction can resolve the original symptom while creating a new failure elsewhere.
+
+## Post-PR correction convergence sweep
+
+When the correction cycle exists because an integration-PR review discovered one or more blocking findings, the re-review must not stop after verifying only those reported corrections.
+
+Before approving the corrected artifact, Agent #2 must perform a **whole-artifact convergence sweep** across the current production-bound implementation.
+
+The convergence sweep must:
+
+- inspect the entire current PR artifact, not only the latest correction diff;
+- revisit issue-critical execution paths and the areas materially affected by all corrections made so far;
+- consider interactions between the original implementation and accumulated correction changes;
+- look for correction-induced defects, stale state, hidden data, lifecycle inconsistencies, authorization/contract drift, and adjacent regressions that are realistically inferable from the current artifact;
+- consolidate all presently identifiable blocking findings into the current review rather than intentionally deferring unrelated blockers to later heads;
+- preserve prior adjudication of non-blocking findings unless new evidence changes their classification.
+
+The convergence sweep is **not** a license for unlimited repository archaeology or a brand-new system audit. It is a bounded whole-artifact pass over the production-bound change and its relevant surrounding execution paths.
+
+The goal is convergence: reduce serial discovery of unrelated blockers across successive PR heads.
+
+If blocking findings remain after the convergence sweep, return **Changes Required** with all currently known blockers. If none remain, the artifact may be **Approved**.
 
 ---
 
@@ -303,6 +327,7 @@ Approved | Changes Required
 - Branch/state:
 - Scope:
 - Relevant diff/repositories:
+- Review mode: Initial | Correction re-review | Post-PR convergence
 
 ## Findings
 
@@ -317,6 +342,11 @@ Approved | Changes Required
 
 ## Validation and evidence reviewed
 - ...
+
+## Convergence sweep
+- Required: Yes | No
+- Whole current artifact reviewed: Yes | No | Not applicable
+- Additional blocking findings surfaced: ...
 
 ## Review summary
 Concise explanation of why the artifact is or is not fit to advance.
@@ -351,6 +381,8 @@ Independent Implementation Review
   │   AGENT #1 STOPS
   │      ↓
   │   separate Agent #2 re-review
+  │      ↓
+  │   if PR-discovered blockers: whole-artifact convergence sweep
   │      └── repeat until Approved
   │
   └── Approved
@@ -377,5 +409,7 @@ A review follows this skill only when:
 - the reviewer does not modify the implementation;
 - the verdict is explicitly Approved or Changes Required;
 - corrections are independently re-reviewed after another real handoff;
+- post-PR blocking corrections receive a whole-artifact convergence sweep before approval;
+- presently identifiable blockers are consolidated rather than intentionally serialized;
 - substantive post-approval changes invalidate the previous approval;
 - the review optimizes for meaningful defect detection rather than review theater.
