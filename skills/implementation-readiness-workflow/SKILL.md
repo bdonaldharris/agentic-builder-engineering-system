@@ -1,3 +1,8 @@
+---
+name: implementation-readiness-workflow
+description: Determine whether a defined application change is sufficiently understood to implement responsibly. Use before non-trivial implementation to resolve architecture, ownership, contract, data, authorization, integration, UX, validation, scope, and material-unknown questions without changing production code.
+---
+
 # Implementation Readiness Workflow
 
 ## Purpose
