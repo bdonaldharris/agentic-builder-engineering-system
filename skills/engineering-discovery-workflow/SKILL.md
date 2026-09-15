@@ -1,3 +1,8 @@
+---
+name: engineering-discovery-workflow
+description: Investigate an existing software system before implementation. Use for repository discovery, current-state audits, capability inventories, gap analysis, cross-layer tracing, and evidence-backed engineering investigation where the system must not be changed.
+---
+
 # Engineering Discovery Workflow
 
 ## Purpose
