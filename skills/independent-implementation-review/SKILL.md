@@ -1,3 +1,8 @@
+---
+name: independent-implementation-review
+description: Perform the independent Agent #2 review of an uncommitted implementation artifact. Use to inspect the actual diff and runtime behavior, evaluate architecture, contracts, security, data access, failure handling, tests, regressions, and scope, classify concrete findings, and return Approved or Changes Required without modifying the implementation.
+---
+
 # Independent Implementation Review
 
 ## Purpose
