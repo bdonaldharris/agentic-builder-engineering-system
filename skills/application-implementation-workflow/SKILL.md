@@ -1,6 +1,6 @@
 ---
 name: application-implementation-workflow
-description: Govern the full application implementation lifecycle for AI-assisted software construction. Use when Agent #1 is implementing an application change and the workflow must enforce a real handoff to a separately invoked Agent #2, correction/re-review, integration PR review, explicit risk classification and disposition, Promotion Protection, and intentionally boring production promotion.
+description: Govern the full application implementation lifecycle for AI-assisted software construction. Use when Agent #1 is implementing an application change and the workflow must enforce inspection of existing architecture before inventing new patterns, clarification of material ambiguity instead of guessing, a real handoff to a separately invoked Agent #2, correction/re-review, integration PR review, explicit risk classification and disposition, Promotion Protection, and intentionally boring production promotion.
 ---
 
 # Application Implementation Workflow
@@ -43,6 +43,44 @@ The workflow must preserve correctness and risk control without allowing avoidab
 
 ---
 
+# Inspect before inventing
+
+Before creating a new abstraction, service, component, integration path, domain construct, storage pattern, workflow, or architectural convention, inspect the existing application for:
+
+- the current owner of the responsibility;
+- similar or adjacent behavior;
+- reusable abstractions;
+- established repository patterns;
+- existing contracts and extension points.
+
+Prefer extending the established owning system over creating parallel capability unless the issue explicitly requires a new boundary or the existing architecture cannot responsibly support the change.
+
+Do not introduce something new merely because it is locally convenient.
+
+---
+
+# Ambiguity and clarification invariant
+
+**Do not guess through material ambiguity. Ask before inventing.**
+
+If the issue, instructions, design intent, acceptance criteria, architecture ownership, contract behavior, data semantics, authorization rules, integration behavior, scope, or user experience is ambiguous in a way that could materially change the implementation, Agent #1 must stop and ask focused clarification questions.
+
+Continue clarifying until the uncertainty is resolved enough to proceed responsibly.
+
+Do not silently choose among materially different interpretations merely to keep implementation moving.
+
+Clarification is not required for every minor implementation detail. Agent #1 may resolve a detail without asking when:
+
+- an established repository pattern provides a clear answer;
+- the choice does not materially alter product behavior, architecture, contracts, data semantics, authorization, integration ownership, or issue scope;
+- the choice is within the normal authority of the implementation role.
+
+If issue wording conflicts with current repository behavior or architecture, surface the conflict instead of deciding silently which source wins.
+
+If implementation uncovers a material ambiguity that was not visible earlier, stop at that point and ask. Do not use code changes as the mechanism for making an unresolved product or architecture decision.
+
+---
+
 # Role-separation and handoff invariant
 
 Agent #1 and Agent #2 are separate workflow participants.
@@ -82,13 +120,15 @@ Agent #1 performs the implementation locally.
 Agent #1 must:
 
 1. inspect the issue and current repository state;
-2. inspect relevant architecture and existing patterns before changing code;
-3. create/use the appropriate issue branch from the current integration branch;
-4. implement only the issue scope;
-5. add or update appropriate tests and contracts;
-6. run focused and relevant regression validation;
-7. inspect the full working-tree diff;
-8. report implementation details and repository state.
+2. inspect the relevant architecture, ownership boundaries, reusable capabilities, and existing patterns before changing code;
+3. clarify material ambiguity before implementation rather than guessing or inferring consequential behavior;
+4. create/use the appropriate issue branch from the current integration branch;
+5. implement only the issue scope;
+6. prefer extension of established owning abstractions over parallel implementations unless a new boundary is justified;
+7. add or update appropriate tests and contracts;
+8. run focused and relevant regression validation;
+9. inspect the full working-tree diff;
+10. report implementation details and repository state.
 
 ## Mandatory hold point
 
@@ -158,6 +198,8 @@ If one or more findings are dispositioned `Fix before current merge`:
 7. repeat only while unresolved Integration Blockers remain for the current advancement boundary.
 
 Do not force another correction cycle merely because a Production Blocker or Follow-up exists when its current disposition is deferred and the residual integration risk is acceptable.
+
+If a requested correction itself exposes a material ambiguity, Agent #1 must stop and clarify before choosing a corrective design.
 
 ---
 
@@ -309,6 +351,9 @@ Any agent or coordinator generating workflow prompts from this skill must preser
 In particular:
 
 - implementation prompts should invoke this skill instead of reproducing it;
+- Agent #1 must inspect current architecture and existing patterns before inventing new structures;
+- Agent #1 must ask focused questions when material ambiguity remains instead of guessing through it;
+- prompts should not manufacture questions for minor details already resolved by established repository patterns;
 - Agent #1 must stop for a separately invoked Agent #2;
 - correction prompts must preserve complete-artifact re-approval;
 - correction-review prompts must not use language that narrows Agent #2 to only the latest diff;
@@ -324,37 +369,43 @@ The goal is to reduce prompt duplication, not move the workflow text into every 
 ```text
 Issue
   ↓
-Agent #1 implements
+Agent #1 inspects existing architecture / ownership / patterns
   ↓
-Agent #1 stops
-  ↓
-separate Agent #2 complete-artifact review
-  ↓
-workflow owner evaluates finding classifications + dispositions
-  ↓
-Integration Blocker requiring fix?
-  ├── Yes → Agent #1 correction → separate Agent #2 re-review
-  │                              ↓
-  │                    verify fixes + re-establish whole-artifact approval
-  │                              └── repeat only while Integration Blockers remain
-  │
+Material ambiguity?
+  ├── Yes → ask focused questions → resolve before consequential implementation
   └── No
          ↓
-      commit / push / PR → integration
+      Agent #1 implements
          ↓
-      Promotion Protection
+      Agent #1 stops
          ↓
-      integration-pr-review
+      separate Agent #2 complete-artifact review
          ↓
-      human approval
+      workflow owner evaluates finding classifications + dispositions
          ↓
-      integration / UAT / dependent development
-         ↓
-      production-promotion risk evaluation
-         ↓
-      unacceptable residual production risk?
-         ├── Yes → correction branch from integration → normal workflow
-         └── No → intentionally boring promotion
+      Integration Blocker requiring fix?
+         ├── Yes → Agent #1 correction → separate Agent #2 re-review
+         │                              ↓
+         │                    verify fixes + re-establish whole-artifact approval
+         │                              └── repeat only while Integration Blockers remain
+         │
+         └── No
+                ↓
+             commit / push / PR → integration
+                ↓
+             Promotion Protection
+                ↓
+             integration-pr-review
+                ↓
+             human approval
+                ↓
+             integration / UAT / dependent development
+                ↓
+             production-promotion risk evaluation
+                ↓
+             unacceptable residual production risk?
+                ├── Yes → correction branch from integration → normal workflow
+                └── No → intentionally boring promotion
 ```
 
 ---
@@ -363,6 +414,9 @@ Integration Blocker requiring fix?
 
 An implementation follows this skill only when:
 
+- Agent #1 inspects the current application architecture and established patterns before creating new abstractions or parallel capability;
+- material ambiguity is clarified rather than guessed through;
+- minor implementation details may follow established patterns without unnecessary questions;
 - Agent #1 stops for separate Agent #2 review;
 - Agent #2 approval applies to the complete current artifact;
 - correction re-review verifies fixes and then re-establishes complete-artifact approval;
