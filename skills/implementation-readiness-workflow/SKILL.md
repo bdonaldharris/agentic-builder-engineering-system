@@ -1,6 +1,6 @@
 ---
 name: implementation-readiness-workflow
-description: Determine whether a defined application change is sufficiently understood to implement responsibly. Use before non-trivial implementation to resolve architecture, ownership, contract, data, authorization, integration, UX, validation, scope, and material-unknown questions without changing production code.
+description: Determine whether a defined application change is sufficiently understood to implement responsibly. Use before non-trivial implementation to inspect existing architecture and ownership, resolve contract, data, authorization, integration, UX, validation, scope, and material-unknown questions, and ask for clarification instead of guessing through consequential ambiguity.
 ---
 
 # Implementation Readiness Workflow
@@ -47,6 +47,28 @@ If a material unknown prevents responsible implementation, stop and resolve it b
 
 ---
 
+# Clarification rule
+
+**Do not guess through material ambiguity. Ask before inventing.**
+
+If the issue, instructions, design intent, acceptance boundary, architecture ownership, contract behavior, data semantics, authorization rules, integration behavior, or user experience is ambiguous in a way that could materially change the implementation, ask focused clarification questions before declaring the change ready.
+
+Continue clarifying until the uncertainty is resolved enough that implementation can proceed without relying on consequential assumptions.
+
+Do not silently choose among materially different interpretations merely to keep the workflow moving.
+
+Clarification is not required for every minor implementation detail. A detail may be resolved without asking when:
+
+- an established repository pattern provides a clear answer;
+- the choice does not materially change product behavior, architecture, contracts, data semantics, authorization, integration ownership, or issue scope;
+- the choice remains within the authority of the implementation role.
+
+When repository evidence and issue wording conflict, surface the conflict rather than choosing one silently.
+
+When the workflow owner is available and a material unknown can be resolved directly, ask the necessary questions before returning `NOT READY`. Return `NOT READY` when clarification cannot currently resolve the blocking uncertainty, an external decision remains outstanding, or further discovery is required.
+
+---
+
 # Relationship to discovery
 
 Implementation readiness is not the same as engineering discovery.
@@ -80,7 +102,7 @@ Establish:
 
 Do not silently invent missing product behavior.
 
-If the issue requires a product or architectural decision that has not been made, surface the decision rather than choosing arbitrarily.
+If the issue requires a product or architectural decision that has not been made, ask for clarification rather than choosing arbitrarily.
 
 ## 2. Repository and ownership boundary
 
@@ -91,6 +113,8 @@ Determine:
 - whether similar behavior already exists;
 - which established repository patterns should be followed;
 - whether the proposed change would duplicate existing capability.
+
+**Inspect before inventing.** Before proposing a new abstraction, service, component, integration path, or architectural pattern, inspect the existing application for an established owner or reusable pattern.
 
 Prefer extending the established owning system over creating a parallel implementation without justification.
 
@@ -236,6 +260,8 @@ The agent should inspect the minimum sufficient set of relevant artifacts, which
 
 Do not infer architecture solely from filenames, issue wording, or an implementation summary from another agent.
 
+Before introducing or recommending something new, determine whether the current application already contains an owning abstraction, reusable implementation, or established pattern that should be extended instead.
+
 ---
 
 # Unknowns and decision handling
@@ -246,19 +272,21 @@ Classify unresolved items before implementation begins.
 
 A minor detail that can be safely resolved while following an established repository pattern.
 
-This does not block readiness.
+This does not block readiness and does not require unnecessary clarification.
 
 ## Material unknown
 
-A question whose answer changes architecture, product behavior, contract shape, data semantics, authorization, integration ownership, or other meaningful implementation direction.
+A question whose answer changes architecture, product behavior, contract shape, data semantics, authorization, integration ownership, issue scope, or another meaningful implementation direction.
 
 This blocks readiness until resolved.
+
+Ask focused questions when the workflow owner can resolve it. Do not convert the unknown into an assumption.
 
 ## External decision required
 
 A product, architecture, business, or policy choice that the implementation agent is not authorized to invent.
 
-Stop and surface the decision clearly.
+Stop and ask for the decision clearly.
 
 Do not convert an external decision into an agent assumption merely to keep implementation moving.
 
@@ -357,15 +385,17 @@ Use `READY` only when:
 - relevant authorization/security concerns are understood;
 - relevant integration concerns are understood;
 - a reasonable validation path is known;
-- no material unknown or unauthorized decision remains.
+- no material ambiguity, material unknown, or unauthorized decision remains.
 
 `READY` does not mean every line of code has been predetermined.
 
-It means implementation can begin without relying on architectural guesswork.
+It means implementation can begin without relying on architectural or product guesswork.
 
 ## NOT READY
 
-Use `NOT READY` when a material unknown, unresolved dependency, missing discovery, or external decision would force the implementation agent to invent meaningful behavior or architecture.
+Use `NOT READY` when a material unknown, unresolved ambiguity, dependency, missing discovery, or external decision would force the implementation agent to invent meaningful behavior or architecture.
+
+Ask focused clarification questions first when the workflow owner can reasonably resolve the uncertainty.
 
 State exactly what must be resolved before implementation begins.
 
@@ -383,6 +413,7 @@ During implementation readiness, do not:
 - perform opportunistic refactoring;
 - invent product requirements;
 - invent architectural decisions outside the issue's authority;
+- infer consequential behavior merely to avoid asking a question;
 - treat assumptions as established facts;
 - silently broaden scope;
 - produce a large design document when focused readiness evidence is sufficient.
@@ -399,7 +430,7 @@ The implementation itself should then follow `application-implementation-workflo
 
 The readiness report does not authorize bypassing any implementation hold point, independent review, PR review, or promotion protection defined by that workflow.
 
-If implementation uncovers a material contradiction in the readiness assumptions, stop and resolve the contradiction rather than silently changing direction.
+If implementation uncovers a material contradiction or ambiguity in the readiness assumptions, stop and clarify rather than silently changing direction.
 
 ---
 
@@ -410,18 +441,18 @@ Defined implementation issue
         ↓
 Inspect governing issue + current repository state
         ↓
-Trace relevant architecture / contracts / data / auth / integrations / UX
+Inspect existing architecture / ownership / reusable patterns
+        ↓
+Trace relevant contracts / data / auth / integrations / UX
         ↓
 Identify validation + regression surface
         ↓
-Classify unknowns and scope
-        ↓
-   Material unknown?
-      ├── Yes → NOT READY
+Material ambiguity or unknown?
+      ├── Yes → ask focused clarification questions
       │          ↓
-      │    discovery / decision / prerequisite
-      │          ↓
-      │       re-evaluate
+      │    resolved sufficiently?
+      │       ├── No → NOT READY / discovery / external decision
+      │       └── Yes → re-evaluate
       │
       └── No → READY
                  ↓
@@ -436,11 +467,13 @@ A change has passed this skill only when:
 
 - readiness is grounded in the current repository state;
 - the issue and acceptance boundary are understood;
-- the owning architecture and established patterns have been identified;
+- the owning architecture and established patterns have been identified before new abstractions are proposed;
 - relevant contract, persistence, authorization, integration, UX, and operational impacts have been considered;
 - the expected validation surface is known;
 - adjacent risks and scope boundaries are explicit;
+- material ambiguity is clarified rather than guessed through;
 - material unknowns are resolved rather than converted into assumptions;
+- minor details may follow established patterns without unnecessary ceremony;
 - the agent returns an explicit `READY` or `NOT READY` decision;
 - no implementation work is performed as part of the readiness pass;
 - a `READY` change proceeds through the normal application implementation workflow.
