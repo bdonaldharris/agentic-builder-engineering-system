@@ -196,13 +196,30 @@ Do not trigger a new automated PR review after every individual correction commi
 
 Production Blockers and Follow-ups with an accepted deferred disposition do not force another correction cycle merely because they exist.
 
+## Correction-finalization invariant
+
+A PR correction cycle is **not complete when the corrected commit is merely pushed**.
+
+After the completed correction cycle has been pushed, CI/checks have settled as required, and the corrected PR head is stable, the workflow must continue through the required final-head automated-review trigger before the PR may be described as ready for integration review or merge.
+
+When Codex is the configured reviewer, correction finalization therefore includes posting the **Canonical Final-Head Codex Review Request** defined in Phase 6 as a new top-level PR comment.
+
+A handoff that ends with only `commit/push/PR updated` after a substantive PR correction is incomplete. The workflow must either:
+
+- post the required canonical final-head review request; or
+- explicitly report that correction finalization is still incomplete because the required automated-review trigger has not yet been posted.
+
+Do not rely on conversational memory to add this step later.
+
 ---
 
 # Phase 6 — Stable-final-head review
 
 A substantive PR head change invalidates completed automated review of the previous head for merge-gating purposes.
 
-Once the correction cycle is complete, Agent #2 has re-established approval over the complete current artifact, and the PR head is stable, request one fresh automated review when the configured reviewer requires a retrigger.
+Once the correction cycle is complete, Agent #2 has re-established approval over the complete current artifact, and the corrected PR head is stable, request one fresh automated review when the configured reviewer requires a retrigger.
+
+This request is part of **correction finalization**, not an optional later review step. Do not stop after reporting that the corrected commit was pushed or that the PR was updated.
 
 For Codex, use a **new top-level PR comment using the Canonical Final-Head Codex Review Request below**.
 
@@ -437,6 +454,7 @@ An integration PR follows this skill only when:
 - presently identifiable Integration Blockers are consolidated rather than intentionally drip-fed;
 - prior adjudications are not relitigated without new evidence;
 - stable-final-head automated review uses the canonical request when Codex is configured;
+- after a substantive PR correction is pushed, correction finalization does not end at `PR updated`; the required final-head automated review request is posted before the PR is declared ready for integration review or merge;
 - no unresolved Integration Blocker remains at integration merge;
 - Production Blockers/Follow-ups may remain when appropriately documented and dispositioned;
 - promotion is a risk-evaluation gate, not an automatic remediation gate;
