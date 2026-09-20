@@ -281,6 +281,8 @@ Do not reconstruct or paraphrase the canonical Codex review request in per-imple
 
 If PR-review corrections are accepted for the current merge, they return through Agent #1 and separate Agent #2 re-review. Agent #2 verifies the fixes first and then re-establishes approval over the complete current artifact.
 
+After those approved PR corrections are committed and pushed, the correction handoff is **not complete at `PR updated`**. Finalization must continue under `integration-pr-review` through the required stable-final-head automated review request before the PR is treated as ready for integration review or merge.
+
 ---
 
 # Direct-to-production implementation exceptions
@@ -358,6 +360,7 @@ In particular:
 - correction prompts must preserve complete-artifact re-approval;
 - correction-review prompts must not use language that narrows Agent #2 to only the latest diff;
 - integration-PR prompts must invoke `integration-pr-review` rather than reconstruct its review contract;
+- Agent #1 correction-finalization prompts must not end at commit/push/PR update when a substantive PR correction changed the head; they must preserve the required final-head automated review trigger defined by `integration-pr-review`;
 - promotion prompts must preserve boring promotion while treating findings as risk inputs rather than automatic remediation commands.
 
 The goal is to reduce prompt duplication, not move the workflow text into every prompt.
@@ -426,6 +429,7 @@ An implementation follows this skill only when:
 - integration is blocked only by unresolved Integration Blockers or incomplete required review;
 - known production-hardening items may remain when documented and appropriately dispositioned;
 - integration PR review follows `integration-pr-review`;
+- a substantive PR correction is not considered finalized merely because the corrected commit was pushed; the required stable-final-head automated review request must be posted before integration readiness is declared;
 - promotion remains intentionally boring without becoming an automatic remediation gate;
 - corrective feature work is not performed inside promotion;
 - production receives no knowingly unacceptable residual risk;
