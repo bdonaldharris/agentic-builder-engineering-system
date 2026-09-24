@@ -85,6 +85,20 @@ Agent #1:
 9. inspects the full working-tree diff;
 10. reports implementation and repository state.
 
+## Supabase table creation
+
+When Agent #1 creates a Supabase table, do not assume that Data API access should exist and do not rely on historical automatic grants.
+
+Use the access model established during readiness:
+
+- if no Data API role should access the table, do not add Data API grants merely by convention;
+- if Data API access is required, the creating migration must explicitly grant only the required operations to only the intended PostgreSQL roles;
+- keep PostgreSQL grants distinct from RLS policies: grants control whether the role may perform the table operation at all, while RLS controls which rows are permitted;
+- the migration must reconstruct the intended access model from scratch without depending on prior Supabase defaults;
+- where relevant to the issue, validate reconstructed role-based access through the same path the application uses.
+
+Do not broaden permissions for convenience.
+
 ## Mandatory hold point
 
 Agent #1 must **not** commit, push, open a PR, or self-satisfy Agent #2 review.
