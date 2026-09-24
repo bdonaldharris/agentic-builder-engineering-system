@@ -160,6 +160,31 @@ Where applicable, determine:
 - likely query-volume or N+1 risks;
 - idempotency requirements.
 
+### Supabase Data API access for newly created tables
+
+Supabase has announced that beginning **October 30, 2026**, existing projects will no longer automatically receive Data API grants for newly created tables in the `public` schema. Encode the engineering rule now rather than relying on the historical default or the cutoff date.
+
+When a change creates a Supabase table, readiness must **explicitly determine whether any Data API role should have access at all**.
+
+If Data API access is required:
+
+- identify only the PostgreSQL roles that require access, such as `anon`, `authenticated`, `service_role`, or another applicable role;
+- determine only the operations each intended role requires;
+- require the same migration that creates the table to establish those grants explicitly;
+- do not rely on historical Supabase automatic grants;
+- do not apply broad example grants that exceed the application's intended access model.
+
+If no Data API role should access the table, readiness should preserve that as an intentional design decision rather than adding grants by default.
+
+Treat PostgreSQL grants and Row Level Security as separate access layers:
+
+- PostgreSQL `GRANT` determines whether a role can access the table or operation at all;
+- RLS and its policies determine which rows that role/user may access and under what conditions.
+
+The migration must be able to reconstruct the intended access model from scratch for fresh projects, preview branches, fresh environments, and database resets such as `supabase db reset`, without depending on historical Supabase defaults.
+
+Where verification includes reconstruction or role-based access, plan to verify that each intended Data API role can actually perform the required operations, and that roles intentionally denied access remain denied.
+
 ## 6. Authorization, security, and privacy
 
 Where applicable, determine:
