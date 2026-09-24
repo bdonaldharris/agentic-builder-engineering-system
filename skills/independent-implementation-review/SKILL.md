@@ -201,6 +201,18 @@ This narrow review contract does not remove existing engineering discipline.
 
 Where relevant to the changed behavior, verify that the implementation did not create an unnecessary parallel architecture when an established owner/pattern already exists.
 
+When the **current implementation** creates or modifies a Supabase table or migration used through the Data API, inspect the relevant PostgreSQL grants and RLS path only far enough to answer the three governing questions.
+
+A missing required grant is a current implementation blocker only when it causes one of the governing questions to fail, for example when:
+
+- an acceptance criterion requiring Data API access is not met;
+- the current change introduces a regression in the intended access path;
+- the implemented Data API behavior does not work because the intended role lacks the required table operation.
+
+Do not audit unrelated historical Supabase tables or perform broad database-permission archaeology. Preexisting grants, missing grants, or RLS policies outside the current change are suggestions or out of scope unless the current implementation demonstrably affects them.
+
+Remember that PostgreSQL grants and RLS are separate layers: a role may have an RLS policy but still lack the table-level operation grant needed to reach that policy, or it may have a table grant while RLS still restricts rows.
+
 If material ambiguity in the issue, design, or acceptance criteria prevents responsible review, ask focused clarification questions instead of guessing.
 
 Do not manufacture ambiguity for minor implementation details that established repository patterns already resolve.
