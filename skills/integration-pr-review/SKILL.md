@@ -1,6 +1,6 @@
 ---
 name: integration-pr-review
-description: Review and gate an implementation pull request using the narrow three-question contract: acceptance criteria met, no new bug/regression introduced, and changed behavior works. Run one normal automated review on the stable implementation head, independently evaluate its findings, correct only genuine current-PR defects, use narrow Agent #2 re-review after correction, and avoid recursive automated-review loops.
+description: Shorthand: pr-review. Review and gate an implementation pull request using the narrow three-question contract: acceptance criteria met, no new bug/regression introduced, and changed behavior works. Run one normal automated review on the stable implementation head, independently evaluate its findings, correct only genuine current-PR defects, use narrow Agent #2 re-review after correction, and avoid recursive automated-review loops.
 ---
 
 # Integration PR Review
@@ -12,6 +12,20 @@ This skill governs review and merge gating for implementation pull requests targ
 Its job is not to perform a general application audit.
 
 Its job is to answer whether the current PR should merge.
+
+## Invocation model
+
+The pull request and its governing issue are the authoritative sources of PR-specific implementation context, acceptance criteria, and changed artifact state.
+
+This skill owns the reusable integration-PR review procedure. The invocation prompt does not need to restate the review contract or workflow rules already defined here.
+
+When the agent is already operating in the correct repository workspace, a minimal invocation is sufficient, for example:
+
+```text
+review PR #1501 using pr-review
+```
+
+Resolve `pr-review` to this canonical skill, retrieve/read the PR and governing issue, and execute this workflow against the current PR artifact.
 
 The governing rule is:
 
