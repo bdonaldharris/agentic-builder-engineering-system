@@ -1,6 +1,6 @@
 ---
 name: independent-implementation-review
-description: Perform the independent Agent #2 review of an implementation artifact using the narrow three-question review contract: acceptance criteria met, no new bug/regression introduced, and implemented behavior works. Use only after a real handoff from Agent #1. Review enough surrounding code to answer those questions, route unrelated observations to the consolidated Application Improvement Suggestions backlog, and do not turn review into an open-ended system audit.
+description: Shorthand: indep-review. Perform the independent Agent #2 review of an implementation artifact using the narrow three-question review contract: acceptance criteria met, no new bug/regression introduced, and implemented behavior works. Use only after a real handoff from Agent #1. Review enough surrounding code to answer those questions, route unrelated observations to the consolidated Application Improvement Suggestions backlog, and do not turn review into an open-ended system audit.
 ---
 
 # Independent Implementation Review
@@ -12,6 +12,20 @@ This skill defines the canonical Agent #2 review procedure for application imple
 The purpose of review is to determine whether the **current implementation is correct for the issue**, not to audit the application for every defect or improvement that can be discovered while tracing the change.
 
 The governing review contract is intentionally narrow.
+
+## Invocation model
+
+The governing issue is the authoritative source of change-specific requirements, acceptance criteria, scope, and intended behavior.
+
+This skill owns the reusable Agent #2 review procedure. The invocation prompt does not need to restate the issue specification or the review rules defined here.
+
+When Agent #2 is already operating in the correct repository workspace with access to the implementation artifact, a minimal invocation is sufficient, for example:
+
+```text
+review #1482 using indep-review
+```
+
+Resolve `indep-review` to this canonical skill, retrieve/read the governing issue, inspect the current workspace artifact, and perform the independent review. Do not depend on prompt duplication or Agent #1's summary to reconstruct the issue contract.
 
 ---
 
