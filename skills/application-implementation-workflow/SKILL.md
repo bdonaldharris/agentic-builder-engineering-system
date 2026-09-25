@@ -1,6 +1,6 @@
 ---
 name: application-implementation-workflow
-description: Govern the application implementation lifecycle with scoped Agent #1 implementation, independent Agent #2 review, issue-bound corrections, one normal automated PR review, and boring promotion. Inspect existing architecture before inventing new structures, ask when material requirements are ambiguous, and use the three-question review contract without expanding work into unrelated application auditing.
+description: Shorthand: implement-workflow. Govern the application implementation lifecycle with scoped Agent #1 implementation, independent Agent #2 review, issue-bound corrections, one normal automated PR review, and boring promotion. Inspect existing architecture before inventing new structures, ask when material requirements are ambiguous, and use the three-question review contract without expanding work into unrelated application auditing.
 ---
 
 # Application Implementation Workflow
@@ -10,6 +10,20 @@ description: Govern the application implementation lifecycle with scoped Agent #
 This skill defines the canonical implementation lifecycle for application software constructed with AI agents.
 
 It keeps implementation scoped to the governing issue while preserving independent review and practical delivery throughput.
+
+## Invocation model
+
+The governing issue is the authoritative source of change-specific requirements, acceptance criteria, scope, constraints, and implementation context.
+
+This skill owns the reusable implementation procedure. The invocation prompt does not need to restate issue content or workflow rules already defined here.
+
+When the agent is already operating in the correct repository workspace, a minimal invocation is sufficient, for example:
+
+```text
+implement #1482 using implement-workflow
+```
+
+Resolve `implement-workflow` to this canonical skill, then retrieve/read the governing issue and execute this workflow. Do not require the prompt to duplicate the issue specification, branch rules, review rules, or recurring `DO NOT` instructions owned by this skill.
 
 The governing review contract is:
 
