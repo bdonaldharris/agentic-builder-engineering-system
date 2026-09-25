@@ -1,6 +1,6 @@
 ---
 name: implementation-readiness-workflow
-description: Determine whether a defined application change is sufficiently understood to implement responsibly. Use before non-trivial implementation to inspect existing architecture and ownership, resolve contract, data, authorization, integration, UX, validation, scope, and material-unknown questions, and ask for clarification instead of guessing through consequential ambiguity.
+description: Shorthand: readiness-workflow. Determine whether a defined application change is sufficiently understood to implement responsibly. Use before non-trivial implementation to inspect existing architecture and ownership, resolve contract, data, authorization, integration, UX, validation, scope, and material-unknown questions, and ask for clarification instead of guessing through consequential ambiguity.
 ---
 
 # Implementation Readiness Workflow
@@ -14,6 +14,20 @@ It exists to prevent implementation from beginning before the issue, affected sy
 The goal is not to produce a large design document before every change.
 
 The goal is to establish that the change is understood well enough to implement deliberately rather than discovering the design while modifying the system.
+
+## Invocation model
+
+The governing issue is the authoritative source of change-specific requirements, acceptance criteria, scope, constraints, and known implementation/discovery context.
+
+This skill owns the reusable readiness procedure. The invocation prompt should identify the issue and skill rather than restating their contents.
+
+When the agent is already operating in the correct repository workspace, a minimal invocation is sufficient, for example:
+
+```text
+assess #1482 using readiness-workflow
+```
+
+Resolve `readiness-workflow` to this canonical skill, retrieve/read the governing issue, and perform the readiness assessment from the current repository state.
 
 ---
 
