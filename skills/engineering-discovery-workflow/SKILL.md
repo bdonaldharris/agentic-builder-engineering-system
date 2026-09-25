@@ -1,6 +1,6 @@
 ---
 name: engineering-discovery-workflow
-description: Investigate an existing software system before implementation. Use for repository discovery, current-state audits, capability inventories, gap analysis, cross-layer tracing, and evidence-backed engineering investigation where the system must not be changed.
+description: Shorthand: eng-discovery. Investigate an existing software system before implementation. Use for repository discovery, current-state audits, capability inventories, gap analysis, cross-layer tracing, and evidence-backed engineering investigation where the system must not be changed.
 ---
 
 # Engineering Discovery Workflow
@@ -10,6 +10,20 @@ description: Investigate an existing software system before implementation. Use 
 This skill defines the canonical workflow for investigating an existing software system before implementation.
 
 It exists to make discovery evidence-based, repeatable, and clearly separated from implementation. The goal is to understand what the system actually does, identify relevant gaps, and produce findings that can support implementation planning or issue creation without changing the software during discovery.
+
+## Invocation model
+
+The governing issue or discovery request is the authoritative source of the change-specific question, desired behavior, scope, and known context.
+
+This skill owns the reusable discovery procedure. The invocation prompt does not need to restate discovery rules already defined here.
+
+When the agent is already operating in the correct repository workspace, a minimal invocation is sufficient, for example:
+
+```text
+discover #1482 using eng-discovery
+```
+
+Resolve `eng-discovery` to this canonical skill, retrieve/read the governing issue or request, and investigate the current repository state.
 
 ## Applicability
 
