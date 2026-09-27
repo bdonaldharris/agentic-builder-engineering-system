@@ -99,6 +99,16 @@ Agent #1:
 9. inspects the full working-tree diff;
 10. reports implementation and repository state.
 
+## Continuation invariant
+
+**Incomplete work is not a response state.**
+
+Agent #1 must not voluntarily return control while executable issue-scoped work remains and no material blocker exists.
+
+Completing only part of the issue does not satisfy Phase 1. Finishing one architectural layer, internal milestone, scaffold, adapter, endpoint, contract, integration slice, or test subset while other required issue-scoped work remains is still incomplete implementation.
+
+If Agent #1 can identify remaining issue-scoped implementation tasks and no material blocker prevents executing them, that is evidence that implementation should continue rather than evidence that control should be returned.
+
 ## Supabase table creation
 
 When Agent #1 creates a Supabase table, do not assume that Data API access should exist and do not rely on historical automatic grants.
@@ -113,11 +123,60 @@ Use the access model established during readiness:
 
 Do not broaden permissions for convenience.
 
+## Pre-return completion gate
+
+Before Agent #1 returns control, compare the current artifact against the governing issue scope and acceptance criteria.
+
+If any required implementation work remains incomplete and no material blocker exists, Agent #1 must continue implementation instead of returning a progress report.
+
+During Phase 1, Agent #1 has only two valid terminal states:
+
+### 1. Ready for Agent #2 independent review
+
+Use this state only when:
+
+- all issue-scoped implementation is complete;
+- required tests, contracts, migrations, configuration, and integration work are complete as applicable;
+- relevant validation has been run;
+- acceptance criteria have been checked against the current artifact;
+- the work remains uncommitted and unpushed;
+- the artifact is ready for independent review.
+
+Return control with a concise implementation summary and an explicit indication that the artifact is ready for Agent #2 review.
+
+### 2. Material blocker
+
+Use this state only when a concrete blocker prevents further implementation and the blocker cannot be resolved from:
+
+- the governing issue;
+- the current repository;
+- existing architecture and established repository patterns;
+- established product or engineering decisions;
+- authoritative external/provider documentation.
+
+A material-blocker response must identify the exact missing decision, dependency, credential, integration boundary, authoritative answer, or other concrete requirement needed to continue.
+
+Do not label ordinary remaining implementation work as a blocker.
+
+The following are **not valid terminal states**:
+
+- "implementation is still in progress";
+- "not ready for Agent #2 review yet";
+- partial scaffolding is complete;
+- a progress summary;
+- a list of remaining implementation tasks;
+- reaching a natural internal milestone;
+- finishing one architectural layer while other issue-scoped layers remain.
+
+If Agent #1 can describe the remaining executable work, that does not justify returning control unless a material blocker prevents that work from proceeding.
+
 ## Mandatory hold point
 
 Agent #1 must **not** commit, push, open a PR, or self-satisfy Agent #2 review.
 
-Agent #1 stops and returns control for separate Agent #2 review.
+This hold point is reached only after the pre-return completion gate passes and the implementation is complete and ready for separate Agent #2 review.
+
+Agent #1 then returns control for separate Agent #2 review.
 
 ---
 
@@ -283,6 +342,7 @@ Do not restate the whole workflow in each prompt.
 In particular:
 
 - Agent #1 prompts preserve the no-commit/no-push/no-PR hold point;
+- Agent #1 prompts do not need to repeat that partial progress is not a valid return state; this skill owns that rule;
 - Agent #1 inspects existing architecture before inventing new structures;
 - material ambiguity is clarified instead of guessed through;
 - Agent #2 prompts use the three-question review contract;
@@ -345,6 +405,10 @@ An implementation follows this skill only when:
 - Agent #1 inspects existing architecture before creating new architecture;
 - material ambiguity is clarified rather than guessed through;
 - implementation remains inside issue scope;
+- Agent #1 does not voluntarily return control while executable issue-scoped work remains and no material blocker exists;
+- Phase 1 ends only when implementation is ready for Agent #2 review or a material blocker prevents further implementation;
+- a material blocker identifies the exact missing decision, dependency, integration boundary, credential, or authoritative answer required to continue;
+- progress reporting, partial scaffolding, internal milestones, or remaining-task lists are not treated as valid terminal states;
 - Agent #1 stops before independent Agent #2 review;
 - Agent #2 is separately invoked;
 - review is governed by the three questions;
