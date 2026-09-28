@@ -63,11 +63,104 @@ Do not introduce something new merely because it is locally convenient.
 
 **Do not guess through material ambiguity. Ask before inventing.**
 
-If requirements, design intent, acceptance criteria, architecture ownership, contracts, data semantics, authorization, integration behavior, scope, or user experience are materially ambiguous, Agent #1 must stop and ask focused clarification questions.
+If requirements, design intent, acceptance criteria, architecture ownership, contracts, data semantics, authorization, integration behavior, scope, or user experience are materially ambiguous, Agent #1 may return for clarification only when the ambiguity is material and actually prevents further safe execution.
 
-Continue until the uncertainty is resolved enough to implement responsibly.
+Before returning, Agent #1 must attempt to resolve the ambiguity from the governing issue, current repository, existing architecture and established repository patterns, established product or engineering decisions, and authoritative external/provider documentation when applicable.
 
-Minor implementation details do not require clarification when an established repository pattern provides a clear answer and the choice does not materially change behavior or scope.
+Minor implementation details do not justify returning control when an established repository pattern provides a clear answer and the choice does not materially change behavior or scope.
+
+Once a material blocker or ambiguity is resolved, Agent #1 resumes the interrupted implementation or correction cycle. Resolution of the blocker does not create a new progress-report terminal state.
+
+---
+
+# Agent #1 execution invariant
+
+**Incomplete work is not a response state.**
+
+This invariant applies anywhere Agent #1 owns executable implementation or correction work, including:
+
+- initial implementation;
+- internal milestones during implementation;
+- compile/build failure correction;
+- test failure diagnosis and correction;
+- implementation resumed after a material blocker is resolved;
+- Agent #2 correction cycles;
+- Agent #2 re-review correction cycles;
+- automated/Codex review corrections owned by Agent #1.
+
+**Agent #1 must not voluntarily return control while executable issue-scoped implementation or validated correction work remains and no material blocker exists.**
+
+Agent #1 must continue resolving build/test failures that are issue-scoped, correction-scoped, or introduced by the current artifact. Unrelated pre-existing failures must be evidenced and reported separately and do not require Agent #1 to expand scope merely to achieve a globally green suite.
+
+Completing only part of the work does not satisfy the invariant. Finishing one architectural layer, internal milestone, scaffold, adapter, endpoint, contract, migration, service, integration slice, test subset, or wiring step while other required issue-scoped or correction-scoped work remains is still incomplete work.
+
+Compile errors, build failures, failing tests, unfinished wiring, unfinished contracts, unfinished tests, partial scaffolding, or another executable defect introduced by or within the current work are not terminal states when Agent #1 can continue diagnosing or correcting them.
+
+If Agent #1 can identify the executable issue-scoped or correction-scoped work that remains, that is evidence that Agent #1 knows what to do next and should continue. Needing "one more continuation," being "not ready for review yet," or reporting that "the artifact still needs further implementation" does not justify returning control.
+
+---
+
+# Universal pre-return completion gate
+
+Before Agent #1 returns control after any implementation or correction cycle, compare the current artifact against the governing issue scope, applicable review finding/correction scope, and acceptance criteria.
+
+If required executable work remains incomplete and no material blocker exists, Agent #1 must continue execution instead of returning a progress report.
+
+Agent #1 has only these valid terminal states while owning implementation or correction work:
+
+## READY FOR AGENT #2 REVIEW
+
+Use this state after initial implementation only when:
+
+- all issue-scoped implementation is complete;
+- required tests, contracts, migrations, configuration, wiring, and integration work are complete as applicable;
+- relevant validation has been run;
+- acceptance criteria have been checked against the current artifact;
+- any issue-scoped or current-artifact build/test failures have been resolved;
+- unrelated pre-existing failures, if any, are evidenced separately rather than absorbed into scope;
+- the work remains uncommitted and unpushed;
+- the artifact is ready for independent review.
+
+## READY FOR AGENT #2 RE-REVIEW
+
+Use this state after a correction cycle only when:
+
+- the full executable correction required by the demonstrated blocker is complete;
+- all correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related changes required for the corrected artifact to work are complete as applicable;
+- relevant validation has been run;
+- issue-scoped, correction-scoped, or current-artifact build/test failures have been resolved;
+- unrelated pre-existing failures, if any, are evidenced separately rather than absorbed into scope;
+- the corrected artifact is ready for independent re-review.
+
+## MATERIAL BLOCKER
+
+Use this state only when a concrete blocker prevents further safe execution and cannot be resolved from:
+
+- the governing issue;
+- the current repository;
+- existing architecture and established repository patterns;
+- established product or engineering decisions;
+- authoritative external/provider documentation.
+
+A material-blocker response must identify the exact missing decision, dependency, credential, integration boundary, authoritative answer, or other concrete requirement needed to continue.
+
+The following are **not valid terminal states**:
+
+- "implementation is still in progress";
+- "not ready for Agent #2 review yet";
+- "not ready for Agent #2 re-review yet";
+- partial scaffolding is complete;
+- a progress summary;
+- a list of remaining implementation or correction tasks;
+- reaching a natural internal milestone;
+- finishing one file, layer, migration, service, or component while other required work remains;
+- compile errors Agent #1 can continue fixing;
+- failing tests Agent #1 can continue diagnosing or fixing;
+- unfinished wiring;
+- unfinished contracts;
+- unfinished tests;
+- needing "one more continuation";
+- "the artifact still needs further implementation."
 
 ---
 
@@ -78,12 +171,11 @@ Minor implementation details do not require clarification when an established re
 
 Agent #1 must not satisfy Agent #2's review gate by spawning, simulating, impersonating, or internally controlling its own reviewer.
 
-Agent #1 stops before Agent #2 is separately invoked.
+Agent #1 returns control for Agent #2 only after the universal pre-return completion gate produces `READY FOR AGENT #2 REVIEW` or `READY FOR AGENT #2 RE-REVIEW`, as appropriate.
 
 The requirement is a real workflow handoff, not merely a different persona.
 
 ---
-
 # Phase 1 — Agent #1 implementation
 
 Agent #1:
@@ -99,16 +191,6 @@ Agent #1:
 9. inspects the full working-tree diff;
 10. reports implementation and repository state.
 
-## Continuation invariant
-
-**Incomplete work is not a response state.**
-
-Agent #1 must not voluntarily return control while executable issue-scoped work remains and no material blocker exists.
-
-Completing only part of the issue does not satisfy Phase 1. Finishing one architectural layer, internal milestone, scaffold, adapter, endpoint, contract, integration slice, or test subset while other required issue-scoped work remains is still incomplete implementation.
-
-If Agent #1 can identify remaining issue-scoped implementation tasks and no material blocker prevents executing them, that is evidence that implementation should continue rather than evidence that control should be returned.
-
 ## Supabase table creation
 
 When Agent #1 creates a Supabase table, do not assume that Data API access should exist and do not rely on historical automatic grants.
@@ -123,63 +205,15 @@ Use the access model established during readiness:
 
 Do not broaden permissions for convenience.
 
-## Pre-return completion gate
-
-Before Agent #1 returns control, compare the current artifact against the governing issue scope and acceptance criteria.
-
-If any required implementation work remains incomplete and no material blocker exists, Agent #1 must continue implementation instead of returning a progress report.
-
-During Phase 1, Agent #1 has only two valid terminal states:
-
-### 1. Ready for Agent #2 independent review
-
-Use this state only when:
-
-- all issue-scoped implementation is complete;
-- required tests, contracts, migrations, configuration, and integration work are complete as applicable;
-- relevant validation has been run;
-- acceptance criteria have been checked against the current artifact;
-- the work remains uncommitted and unpushed;
-- the artifact is ready for independent review.
-
-Return control with a concise implementation summary and an explicit indication that the artifact is ready for Agent #2 review.
-
-### 2. Material blocker
-
-Use this state only when a concrete blocker prevents further implementation and the blocker cannot be resolved from:
-
-- the governing issue;
-- the current repository;
-- existing architecture and established repository patterns;
-- established product or engineering decisions;
-- authoritative external/provider documentation.
-
-A material-blocker response must identify the exact missing decision, dependency, credential, integration boundary, authoritative answer, or other concrete requirement needed to continue.
-
-Do not label ordinary remaining implementation work as a blocker.
-
-The following are **not valid terminal states**:
-
-- "implementation is still in progress";
-- "not ready for Agent #2 review yet";
-- partial scaffolding is complete;
-- a progress summary;
-- a list of remaining implementation tasks;
-- reaching a natural internal milestone;
-- finishing one architectural layer while other issue-scoped layers remain.
-
-If Agent #1 can describe the remaining executable work, that does not justify returning control unless a material blocker prevents that work from proceeding.
-
 ## Mandatory hold point
 
 Agent #1 must **not** commit, push, open a PR, or self-satisfy Agent #2 review.
 
-This hold point is reached only after the pre-return completion gate passes and the implementation is complete and ready for separate Agent #2 review.
+This hold point is reached only after the universal pre-return completion gate produces `READY FOR AGENT #2 REVIEW`.
 
-Agent #1 then returns control for separate Agent #2 review.
+Agent #1 then returns control for separate Agent #2 review with a concise implementation summary and the artifact still uncommitted and unpushed.
 
 ---
-
 # Phase 2 — Agent #2 review
 
 Agent #2 uses `independent-implementation-review`.
@@ -211,10 +245,14 @@ Suggestions do not change the approval decision.
 If Agent #2 identifies a genuine current-implementation blocker:
 
 1. control returns to Agent #1;
-2. Agent #1 corrects only the demonstrated blocker;
-3. Agent #1 validates;
-4. Agent #1 stops;
-5. separate Agent #2 re-review answers the same three questions again.
+2. Agent #1 completes the full executable correction required by the demonstrated blocker;
+3. Agent #1 completes all correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related changes required for the corrected artifact to work;
+4. Agent #1 resolves build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact;
+5. unrelated pre-existing failures are evidenced and reported separately without expanding correction scope;
+6. Agent #1 runs relevant validation;
+7. Agent #1 applies the universal pre-return completion gate;
+8. only `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER` may return control;
+9. after `READY FOR AGENT #2 RE-REVIEW`, separate Agent #2 re-review answers the same three questions again.
 
 Repeat only while one of the three governing answers fails.
 
@@ -228,10 +266,11 @@ Do not expand the correction into:
 - adjacent performance/security concerns;
 - other suggestions not caused or materially worsened by the current implementation.
 
+A correction is not complete merely because one part of the fix is implemented. If Agent #1 can identify remaining executable correction work and no material blocker prevents it, Agent #1 must continue rather than return a progress summary.
+
 Non-blocking observations belong in the repository's consolidated `Application Improvement Suggestions` backlog, not in the current implementation.
 
 ---
-
 # Phase 4 — Commit, push, and integration PR
 
 After Agent #2 returns `APPROVED`, Agent #1 may:
@@ -262,8 +301,8 @@ The intended PR flow is:
 1. run one normal automated/Codex review on the stable implementation head;
 2. independently evaluate each automated finding against the same three questions;
 3. route findings that do not fail one of those questions to `Application Improvement Suggestions`;
-4. correct only genuine current-PR blockers;
-5. use separate Agent #2 narrow correction re-review;
+4. correct only genuine current-PR blockers; every Agent #1 correction remains governed by the global Agent #1 execution invariant and universal pre-return completion gate;
+5. use separate Agent #2 narrow correction re-review only after Agent #1 reaches `READY FOR AGENT #2 RE-REVIEW`;
 6. if Agent #2 returns `APPROVED — MERGE`, commit/push the approved correction;
 7. verify the pushed artifact matches what Agent #2 reviewed;
 8. satisfy required CI/human approval;
@@ -342,7 +381,7 @@ Do not restate the whole workflow in each prompt.
 In particular:
 
 - Agent #1 prompts preserve the no-commit/no-push/no-PR hold point;
-- Agent #1 prompts do not need to repeat that partial progress is not a valid return state; this skill owns that rule;
+- Agent #1 prompts do not need to repeat the global continuation invariant, universal pre-return completion gate, or valid terminal states; this skill owns those rules;
 - Agent #1 inspects existing architecture before inventing new structures;
 - material ambiguity is clarified instead of guessed through;
 - Agent #2 prompts use the three-question review contract;
@@ -360,44 +399,55 @@ Issue
   ↓
 Agent #1 inspect architecture + clarify material ambiguity
   ↓
-implement issue scope
+implement / validate issue scope
   ↓
-Agent #1 stops
-  ↓
-separate Agent #2:
-  Acceptance criteria met?
-  New bug/regression introduced?
-  Does it work?
-  ↓
-Yes -> No -> Yes?
- ├── No → correct demonstrated blocker → separate Agent #2 re-review
- └── Yes
-        ↓
-     commit / push / integration PR
-        ↓
-     one normal automated PR review
-        ↓
-     evaluate findings against same three questions
-        ↓
-     genuine current-PR blocker?
-       ├── No → suggestion backlog
-       └── Yes → Agent #1 correction
-                  ↓
-               separate Agent #2 narrow re-review
-                  ↓
-               Yes -> No -> Yes = APPROVED — MERGE
-                  ↓
-               commit / push
-                  ↓
-               verify artifact + CI/human approval
-                  ↓
-               MERGE
-        ↓
-     intentionally boring promotion
+universal pre-return completion gate
+  ├── MATERIAL BLOCKER → return exact blocker → resume interrupted cycle after resolution
+  └── READY FOR AGENT #2 REVIEW
+             ↓
+        separate Agent #2:
+          Acceptance criteria met?
+          New bug/regression introduced?
+          Does it work?
+             ↓
+        Yes -> No -> Yes?
+        ├── No → Agent #1 full correction
+        │          ↓
+        │       universal pre-return completion gate
+        │          ├── MATERIAL BLOCKER
+        │          └── READY FOR AGENT #2 RE-REVIEW
+        │                     ↓
+        │                separate Agent #2 re-review
+        └── Yes
+               ↓
+            commit / push / integration PR
+               ↓
+            one normal automated PR review
+               ↓
+            evaluate findings against same three questions
+               ↓
+            genuine current-PR blocker?
+              ├── No → suggestion backlog
+              └── Yes → Agent #1 full correction
+                         ↓
+                      universal pre-return completion gate
+                         ├── MATERIAL BLOCKER
+                         └── READY FOR AGENT #2 RE-REVIEW
+                                    ↓
+                               separate Agent #2 narrow re-review
+                                    ↓
+                               Yes -> No -> Yes = APPROVED — MERGE
+                                    ↓
+                               commit / push
+                                    ↓
+                               verify artifact + CI/human approval
+                                    ↓
+                               MERGE
+               ↓
+            intentionally boring promotion
 ```
 
 ---
-
 # Definition of workflow compliance
 
 An implementation follows this skill only when:
@@ -405,11 +455,16 @@ An implementation follows this skill only when:
 - Agent #1 inspects existing architecture before creating new architecture;
 - material ambiguity is clarified rather than guessed through;
 - implementation remains inside issue scope;
-- Agent #1 does not voluntarily return control while executable issue-scoped work remains and no material blocker exists;
-- Phase 1 ends only when implementation is ready for Agent #2 review or a material blocker prevents further implementation;
+- the Agent #1 execution invariant applies to initial implementation and every correction cycle;
+- Agent #1 does not voluntarily return control while executable issue-scoped implementation or validated correction work remains and no material blocker exists;
+- Agent #1 continues resolving build/test failures that are issue-scoped, correction-scoped, or introduced by the current artifact;
+- unrelated pre-existing failures are evidenced and reported separately and do not force scope expansion merely to achieve a globally green suite;
+- every Agent #1 implementation or correction cycle passes the universal pre-return completion gate;
+- Agent #1 returns only at `READY FOR AGENT #2 REVIEW`, `READY FOR AGENT #2 RE-REVIEW`, or `MATERIAL BLOCKER`, as appropriate;
 - a material blocker identifies the exact missing decision, dependency, integration boundary, credential, or authoritative answer required to continue;
-- progress reporting, partial scaffolding, internal milestones, or remaining-task lists are not treated as valid terminal states;
-- Agent #1 stops before independent Agent #2 review;
+- progress reporting, partial scaffolding, internal milestones, remaining-task lists, resolvable compile/build failures, and resolvable test failures are not treated as valid terminal states;
+- after a material blocker is resolved, Agent #1 resumes the interrupted implementation or correction cycle;
+- Agent #1 returns for independent Agent #2 review/re-review only after the applicable ready state is reached;
 - Agent #2 is separately invoked;
 - review is governed by the three questions;
 - only acceptance failures, implementation-introduced regressions, or non-working behavior require correction;
