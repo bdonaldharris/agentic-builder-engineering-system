@@ -175,24 +175,27 @@ Do not relitigate a previously adjudicated suggestion unless new evidence shows 
 
 If a genuine current-PR blocker exists:
 
-1. Agent #1 corrects only that blocker.
-2. Agent #1 validates the correction.
-3. Agent #1 stops.
-4. Separately invoked Agent #2 performs the narrow correction re-review under `independent-implementation-review`.
-5. Agent #2 answers:
+1. Agent #1 corrects only that blocker under the Agent #1 execution invariant defined by `application-implementation-workflow`.
+2. Agent #1 completes the full executable correction required by the blocker, including correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related work required for the corrected artifact to function as intended.
+3. Agent #1 continues resolving build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact. Unrelated pre-existing failures must be evidenced and reported separately and do not require correction-scope expansion merely to achieve a globally green suite.
+4. Agent #1 runs relevant validation and applies the universal pre-return completion gate from `application-implementation-workflow`.
+5. Agent #1 may return control only at `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER`.
+6. Separately invoked Agent #2 performs the narrow correction re-review under `independent-implementation-review` only after `READY FOR AGENT #2 RE-REVIEW`.
+7. Agent #2 answers:
    - Acceptance criteria met?
    - New bug/regression introduced?
    - Does it work?
-6. If the result is `Yes -> No -> Yes`, Agent #2 returns:
+8. If the result is `Yes -> No -> Yes`, Agent #2 returns:
    `APPROVED — MERGE`
-7. Agent #1 commits and pushes the approved correction.
-8. Confirm the pushed commit represents the artifact Agent #2 reviewed.
-9. Merge the PR when required CI/human approval conditions are satisfied.
+9. Agent #1 commits and pushes the approved correction.
+10. Confirm the pushed commit represents the artifact Agent #2 reviewed.
+11. Merge the PR when required CI/human approval conditions are satisfied.
 
 Correction work must not expand into suggestions or unrelated cleanup.
 
----
+Partial corrective progress, unresolved correction-scoped wiring, resolvable compile/build failures, resolvable correction-scoped test failures, or a list of remaining correction tasks are not valid reasons for Agent #1 to return control.
 
+---
 # Phase 5 — No recursive automated review
 
 **Do not automatically trigger another Codex/automated review merely because an approved correction changed the PR head.**
@@ -319,11 +322,15 @@ Yes -> No -> Yes?
           ↓
       genuine current-PR blocker?
          ├── No → suggestion backlog
-         └── Yes → Agent #1 correction
+         └── Yes → Agent #1 full correction
                     ↓
-                 separate Agent #2 narrow re-review
-                    ↓
-                 Yes -> No -> Yes = APPROVED — MERGE
+                 universal pre-return completion gate
+                    ├── MATERIAL BLOCKER
+                    └── READY FOR AGENT #2 RE-REVIEW
+                               ↓
+                            separate Agent #2 narrow re-review
+                               ↓
+                            Yes -> No -> Yes = APPROVED — MERGE
                     ↓
                  commit / push
                     ↓
@@ -348,8 +355,10 @@ An integration PR follows this skill only when:
 - only acceptance failures, PR-introduced regressions, or non-working changed behavior require current correction;
 - suggestions do not hold the PR open;
 - non-blocking observations route to `Application Improvement Suggestions` instead of automatically becoming standalone issues;
-- Agent #1 applies required corrections;
-- separately invoked Agent #2 narrowly re-reviews corrections;
+- Agent #1 applies required corrections under the global Agent #1 execution invariant from `application-implementation-workflow`;
+- Agent #1 applies the universal pre-return completion gate and returns correction control only at `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER`;
+- unrelated pre-existing build/test failures do not force correction-scope expansion when they are evidenced separately;
+- separately invoked Agent #2 narrowly re-reviews corrections only after `READY FOR AGENT #2 RE-REVIEW`;
 - `Yes -> No -> Yes` after correction produces `APPROVED — MERGE`;
 - a changed head after approved correction does not automatically trigger another automated review;
 - another automated review occurs only for a concrete artifact-mismatch concern or explicit repository requirement;
