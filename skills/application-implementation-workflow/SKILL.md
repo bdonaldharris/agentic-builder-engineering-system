@@ -119,6 +119,7 @@ Use this state after initial implementation only when:
 - any issue-scoped or current-artifact build/test failures have been resolved;
 - unrelated pre-existing failures, if any, are evidenced separately rather than absorbed into scope;
 - the work remains uncommitted and unpushed;
+- the authoritative Environment / Deployment Requirements have been surfaced, including `None` when no actions are required;
 - the artifact is ready for independent review.
 
 ## READY FOR AGENT #2 RE-REVIEW
@@ -131,6 +132,7 @@ Use this state after a correction cycle only when:
 - relevant validation has been run;
 - issue-scoped, correction-scoped, or current-artifact build/test failures have been resolved;
 - unrelated pre-existing failures, if any, are evidenced separately rather than absorbed into scope;
+- any Environment / Deployment Requirements introduced or changed by the correction have been incorporated into the authoritative list;
 - the corrected artifact is ready for independent re-review.
 
 ## MATERIAL BLOCKER
@@ -190,7 +192,8 @@ Agent #1:
 7. adds/updates tests and contracts needed for the changed behavior;
 8. runs focused validation;
 9. inspects the full working-tree diff;
-10. reports implementation and repository state.
+10. identifies and maintains the authoritative Environment / Deployment Requirements for the current artifact;
+11. reports implementation, repository state, and Environment / Deployment Requirements.
 
 ## Supabase table creation
 
@@ -205,6 +208,38 @@ Use the access model established during readiness:
 - where relevant to the issue, validate reconstructed role-based access through the same path the application uses.
 
 Do not broaden permissions for convenience.
+
+## Environment / Deployment Requirements
+
+As implementation progresses, Agent #1 must identify and maintain the authoritative non-code actions required for the reviewed artifact to function in the target environment.
+
+Evaluate at minimum, when applicable:
+
+- SQL migrations or database schema/data changes that must be executed;
+- manual database operations;
+- environment variables;
+- secrets;
+- third-party/provider configuration;
+- webhook configuration;
+- external resource creation such as provider products, prices, queues, buckets, topics, or similar resources;
+- seed data or UAT fixture requirements;
+- infrastructure/platform configuration;
+- restart or redeploy requirements;
+- post-deployment verification requirements.
+
+These requirements must be surfaced before the implementation is handed forward for merge orchestration.
+
+If no environment/deployment actions are required, report exactly:
+
+```text
+Environment / Deployment Requirements: None
+```
+
+Do not omit the section.
+
+A required environment action is not automatically a code defect. For example, an unapplied migration, missing staging secret, unconfigured webhook, absent staging/UAT fixture, or pending restart/redeploy is an environment/deployment requirement unless the implementation itself failed to provide a required migration, configuration contract, provider integration artifact, or other implementation deliverable needed for the feature to function.
+
+Agent #1 owns keeping this list current. Readiness may identify anticipated requirements, but implementation must update the authoritative list as the actual artifact evolves.
 
 ## Mandatory hold point
 
@@ -331,6 +366,7 @@ The PR should accurately describe:
 - governing issue;
 - implemented behavior;
 - validation performed;
+- `Environment / Deployment Requirements`, explicitly listing all known non-code actions or `None`;
 - any lightweight suggestion references when relevant.
 
 Do not turn the PR description into a catalog of unrelated application problems.
@@ -348,7 +384,7 @@ The intended production-bound PR flow is:
 3. route findings that do not fail one of those questions to `Application Improvement Suggestions`;
 4. correct only validated current-PR blockers; every Agent #1 correction remains governed by the global Agent #1 execution invariant, coherent correction boundary, churn trigger when applicable, and universal pre-return completion gate;
 5. use separate Agent #2 narrow correction re-review only after Agent #1 reaches `READY FOR AGENT #2 RE-REVIEW`;
-6. if Agent #2 returns `APPROVED — MERGE`, Agent #1 commits and pushes exactly the approved correction;
+6. if Agent #2 returns `APPROVED — MERGE`, Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post `@codex review`, then stop;
 7. verify the pushed artifact matches what Agent #2 reviewed;
 8. because the production-bound PR head changed, run one bounded final-head automated/Codex review on that new stable head;
 9. independently disposition every final-head finding against the same three governing questions;
@@ -452,6 +488,28 @@ The prompt supplies the task; the skill supplies the procedure.
 
 Do not restate the whole workflow in each prompt.
 
+Small means concise and non-duplicative, not incomplete.
+
+## Whole-artifact operational handoff
+
+When producing an operational artifact intended for the orchestrating developer to copy/paste or execute, provide the **complete current authoritative artifact**.
+
+This applies to:
+
+- agent prompts;
+- review/correction prompts;
+- SQL scripts;
+- migration execution scripts;
+- shell/CLI command sequences;
+- configuration blocks;
+- deployment instructions intended for direct execution.
+
+If an operational artifact changes, provide a new complete version. Do not require the orchestrating developer to reconstruct the authoritative artifact from earlier messages or combine fragments such as "replace this section," "append this," "keep everything else from the previous version," or "change these lines."
+
+A diff, patch, changed section, or comparison is appropriate only when the developer explicitly asks for one.
+
+This rule does not prohibit normal code diffs used during engineering review. It governs copy/paste operational handoffs to the orchestrating developer.
+
 In particular:
 
 - Agent #1 prompts preserve the no-commit/no-push/no-PR hold point;
@@ -546,6 +604,8 @@ An implementation follows this skill only when:
 - a material blocker identifies the exact missing decision, dependency, integration boundary, credential, or authoritative answer required to continue;
 - progress reporting, partial scaffolding, internal milestones, remaining-task lists, resolvable compile/build failures, and resolvable test failures are not treated as valid terminal states;
 - after a material blocker is resolved, Agent #1 resumes the interrupted implementation or correction cycle;
+- the authoritative Environment / Deployment Requirements are maintained and surfaced before handoff, with `None` stated explicitly when no actions are required;
+- copy/paste operational handoffs are delivered as complete current authoritative artifacts unless a diff/patch/changed section is explicitly requested;
 - Agent #1 returns for independent Agent #2 review/re-review only after the applicable ready state is reached;
 - Agent #2 is separately invoked;
 - review is governed by the three questions;
