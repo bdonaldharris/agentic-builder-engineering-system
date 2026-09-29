@@ -137,7 +137,8 @@ Confirm:
 - source and target branches;
 - current PR head SHA;
 - CI/check state;
-- that the PR represents the implementation Agent #2 approved.
+- that the PR represents the implementation Agent #2 approved;
+- that the PR/handoff contains an explicit `Environment / Deployment Requirements` section.
 
 If the pushed artifact differs materially from the artifact Agent #2 approved, stop and resolve that mismatch before merge.
 
@@ -198,7 +199,7 @@ If a genuine current-PR blocker exists:
    - Does it work?
 9. If the result is `Yes -> No -> Yes`, Agent #2 returns:
    `APPROVED — MERGE`
-10. Agent #1 commits and pushes exactly the approved correction.
+10. Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post `@codex review`, then stop.
 11. Confirm the pushed commit represents the artifact Agent #2 reviewed.
 12. Because the production-bound PR head changed, run the bounded final-head automated review defined below.
 
@@ -260,6 +261,44 @@ Do not run repeated automated reviews merely because an automated review occurre
 
 ---
 
+# Environment / Deployment Requirements gate
+
+Before declaring the PR merge-ready, verify that the reviewed PR artifact or handoff explicitly reports:
+
+```text
+Environment / Deployment Requirements
+```
+
+with all known non-code actions required for the reviewed artifact to function in the target environment, or exactly:
+
+```text
+Environment / Deployment Requirements: None
+```
+
+Do not omit the section.
+
+Verify that the surfaced requirements cover the applicable categories:
+
+- SQL migrations or database schema/data changes;
+- manual database operations;
+- environment variables;
+- secrets;
+- third-party/provider configuration;
+- webhook configuration;
+- external resource creation;
+- seed/UAT fixture requirements;
+- infrastructure/platform configuration;
+- restart or redeploy requirements;
+- post-deployment verification requirements.
+
+This gate requires **visibility**, not automatic execution of every environment/deployment action before code review can approve the PR.
+
+An unapplied migration, missing staging secret, unconfigured webhook, absent staging/UAT fixture, or pending restart/redeploy is not automatically a code blocker. Treat it as an environment/deployment requirement unless the implementation itself omitted a required migration, configuration contract, provider integration artifact, or other implementation deliverable needed for the feature to function.
+
+Do not invent deployment work through open-ended archaeology. Verify the known requirements carried forward by readiness/implementation and what is evident from the reviewed artifact.
+
+---
+
 # Phase 6 — Merge decision
 
 The PR is ready to merge when:
@@ -270,6 +309,7 @@ The PR is ready to merge when:
 - any genuine current-PR blockers found by automated review were corrected and re-approved by Agent #2 against the complete artifact;
 - the pushed artifact matches the artifact Agent #2 approved;
 - when a validated correction changed the pushed PR head, the required bounded final-head automated review has completed and no validated blocker remains;
+- `Environment / Deployment Requirements` has been explicitly surfaced, including `None` when no non-code actions are required;
 - required CI/checks are acceptable;
 - required human approval is present.
 
@@ -286,6 +326,31 @@ Yes -> No -> Yes
 ```
 
 Suggestions do not prevent merge.
+
+---
+
+# Merge-ready output contract
+
+When the PR satisfies the three-question contract and all required merge gates, return the merge-ready verdict together with the environment/deployment handoff:
+
+```text
+APPROVED — MERGE
+
+Environment / Deployment Requirements
+- <requirement>
+```
+
+or:
+
+```text
+APPROVED — MERGE
+
+Environment / Deployment Requirements: None
+```
+
+The Environment / Deployment Requirements section is mandatory even when empty.
+
+This output reports operational requirements; it does not by itself mean those actions have already been executed.
 
 ---
 
@@ -411,5 +476,7 @@ An integration PR follows this skill only when:
 - a validated correction that changes the pushed production-bound PR head requires one bounded final-head automated review;
 - repeated automated review is not required when no subsequent implementation correction changes the artifact;
 - automated findings remain evidence, not authority;
+- the PR is not declared merge-ready until `Environment / Deployment Requirements` has been explicitly surfaced, including `None` when applicable;
+- environment/deployment actions are classified as operational requirements rather than code blockers unless the implementation omitted a required artifact/contract;
 - required CI and human approval still apply;
 - promotion remains intentionally boring.
