@@ -1,6 +1,6 @@
 ---
 name: application-implementation-workflow
-description: Shorthand: implement-workflow. Govern the application implementation lifecycle with scoped Agent #1 implementation, independent Agent #2 review, issue-bound corrections, one normal automated PR review, and boring promotion. Inspect existing architecture before inventing new structures, ask when material requirements are ambiguous, and use the three-question review contract without expanding work into unrelated application auditing.
+description: Shorthand: implement-workflow. Govern the application implementation lifecycle with scoped Agent #1 implementation, independent Agent #2 review, coherent issue-bound corrections, one normal automated PR review plus a bounded final-head artifact-integrity review after validated corrections, and boring promotion. Inspect existing architecture before inventing new structures, ask when material requirements are ambiguous, and use the three-question review contract without expanding work into unrelated application auditing.
 ---
 
 # Application Implementation Workflow
@@ -125,7 +125,8 @@ Use this state after initial implementation only when:
 
 Use this state after a correction cycle only when:
 
-- the full executable correction required by the demonstrated blocker is complete;
+- the full executable correction required by the demonstrated blocker is complete at its coherent issue-scoped behavior boundary;
+- directly affected sibling states/transitions governed by the same demonstrated root cause have been corrected when necessary for the original issue-scoped behavior to work;
 - all correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related changes required for the corrected artifact to work are complete as applicable;
 - relevant validation has been run;
 - issue-scoped, correction-scoped, or current-artifact build/test failures have been resolved;
@@ -245,32 +246,76 @@ Suggestions do not change the approval decision.
 If Agent #2 identifies a genuine current-implementation blocker:
 
 1. control returns to Agent #1;
-2. Agent #1 completes the full executable correction required by the demonstrated blocker;
-3. Agent #1 completes all correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related changes required for the corrected artifact to work;
-4. Agent #1 resolves build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact;
-5. unrelated pre-existing failures are evidenced and reported separately without expanding correction scope;
-6. Agent #1 runs relevant validation;
-7. Agent #1 applies the universal pre-return completion gate;
-8. only `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER` may return control;
-9. after `READY FOR AGENT #2 RE-REVIEW`, separate Agent #2 re-review answers the same three questions again.
+2. Agent #1 corrects the demonstrated cause at its coherent issue-scoped behavior boundary, not merely the single reported permutation;
+3. when the validated defect shows that the same issue-scoped state, transition, authority rule, recovery rule, or other behavior model governs directly related cases, Agent #1 corrects the directly affected sibling states/transitions necessary for the original issue-scoped behavior to work;
+4. Agent #1 completes all correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related changes required for the corrected artifact to work;
+5. Agent #1 resolves build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact;
+6. unrelated pre-existing failures are evidenced and reported separately without expanding correction scope;
+7. Agent #1 runs relevant validation;
+8. Agent #1 applies the universal pre-return completion gate;
+9. only `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER` may return control;
+10. after `READY FOR AGENT #2 RE-REVIEW`, separate Agent #2 re-review answers the same three questions again.
 
-Repeat only while one of the three governing answers fails.
+## Coherent correction boundary
 
-Do not expand the correction into:
+**Correct the demonstrated cause, not only the reported permutation.**
 
-- preexisting bugs;
+A validated blocker may reveal that one issue-scoped behavior rule governs multiple directly related states or transitions. In that case, the correction boundary includes the directly affected behavior family necessary to resolve the demonstrated defect coherently.
+
+This does **not** authorize:
+
+- unrelated refactoring;
 - architecture cleanup;
-- future hardening;
+- speculative hardening;
+- neighboring product work;
 - unrelated tests;
-- refactoring;
-- adjacent performance/security concerns;
+- backlog expansion;
+- unrelated performance/security work;
 - other suggestions not caused or materially worsened by the current implementation.
 
-A correction is not complete merely because one part of the fix is implemented. If Agent #1 can identify remaining executable correction work and no material blocker prevents it, Agent #1 must continue rather than return a progress summary.
+Diagnostic state models, scenario matrices, reviewer-generated examples, and hardening ideas do **not** become new acceptance criteria. They are evidence used to understand the demonstrated defect and correction boundary.
+
+The governing questions remain:
+
+1. Are the **original issue acceptance criteria** met?
+2. Has the current artifact introduced or materially worsened a bug/regression?
+3. Does the implemented behavior work?
+
+A diagnostic scenario or reviewer-generated example requires correction only when it is required by the original issue acceptance criteria or demonstrates an actual defect/regression in the current artifact.
+
+## Correction-churn trigger
+
+Do not perform bounded state/transition analysis as mandatory ceremony for an ordinary first-pass correction.
+
+Trigger it only when:
+
+```text
+initial blocker
+  ↓
+Agent #1 correction
+  ↓
+Agent #2 re-review finds another directly related failure
+in the same behavioral subsystem
+```
+
+When that occurs, do not continue one-finding-at-a-time patching. Before the next correction:
+
+1. perform a bounded issue-scoped model/state-transition analysis of that subsystem;
+2. identify the coherent authority/state/transition rules that govern the demonstrated failures;
+3. identify all currently demonstrable blockers within the original issue acceptance criteria, changed behavior, and demonstrated regression surface;
+4. establish one coherent correction boundary;
+5. return that bounded correction set to Agent #1.
+
+The churn analysis remains diagnostic. It must not create new acceptance criteria, require exhaustive combinatorial testing, or expand into unrelated application archaeology.
+
+Repeat the correction/re-review cycle only while one of the three governing answers fails.
+
+A correction is not complete merely because one reported example was patched. If Agent #1 can identify remaining executable correction work inside the coherent issue-scoped boundary and no material blocker prevents it, Agent #1 must continue rather than return a progress summary.
 
 Non-blocking observations belong in the repository's consolidated `Application Improvement Suggestions` backlog, not in the current implementation.
 
 ---
+
 # Phase 4 — Commit, push, and integration PR
 
 After Agent #2 returns `APPROVED`, Agent #1 may:
@@ -296,23 +341,52 @@ Do not turn the PR description into a catalog of unrelated application problems.
 
 Use `integration-pr-review`.
 
-The intended PR flow is:
+The intended production-bound PR flow is:
 
-1. run one normal automated/Codex review on the stable implementation head;
+1. run one normal automated/Codex review on the stable initial implementation head;
 2. independently evaluate each automated finding against the same three questions;
 3. route findings that do not fail one of those questions to `Application Improvement Suggestions`;
-4. correct only genuine current-PR blockers; every Agent #1 correction remains governed by the global Agent #1 execution invariant and universal pre-return completion gate;
+4. correct only validated current-PR blockers; every Agent #1 correction remains governed by the global Agent #1 execution invariant, coherent correction boundary, churn trigger when applicable, and universal pre-return completion gate;
 5. use separate Agent #2 narrow correction re-review only after Agent #1 reaches `READY FOR AGENT #2 RE-REVIEW`;
-6. if Agent #2 returns `APPROVED — MERGE`, commit/push the approved correction;
+6. if Agent #2 returns `APPROVED — MERGE`, Agent #1 commits and pushes exactly the approved correction;
 7. verify the pushed artifact matches what Agent #2 reviewed;
-8. satisfy required CI/human approval;
-9. merge.
+8. because the production-bound PR head changed, run one bounded final-head automated/Codex review on that new stable head;
+9. independently disposition every final-head finding against the same three governing questions;
+10. if no validated blocker remains, satisfy required CI/human approval and merge.
 
-**Do not automatically trigger another automated review merely because an approved correction changed the PR head.**
+The final-head automated review is an **artifact-integrity gate**. Automated review remains evidence, not authority.
 
-A second automated review is appropriate only when there is a specific artifact-mismatch concern or an explicit repository rule requires it.
+Diagnostic scenarios, reviewer-generated matrices, and automated examples do not create new acceptance criteria. A final-head finding blocks only when it demonstrates:
 
-The previous recursive final-head review behavior is not part of this workflow.
+1. an original acceptance criterion is unmet;
+2. the current artifact introduced or materially worsened a bug/regression; or
+3. the implemented behavior does not work.
+
+## Final-head anti-recursion rule
+
+A final-head automated review is **required** after a validated blocker correction changes the pushed production-bound PR head.
+
+Do **not** run repeated automated reviews when no subsequent implementation correction changes the artifact.
+
+Do **not** blindly obey automated findings or allow automated review to expand acceptance criteria.
+
+If the final-head automated review identifies another validated blocker and another correction materially changes the artifact, the normal sequence applies again because the production-bound artifact changed:
+
+```text
+validated blocker
+  ↓
+Agent #1 coherent correction
+  ↓
+Agent #2 complete-artifact re-review
+  ↓
+APPROVED — MERGE
+  ↓
+commit + push exactly approved correction
+  ↓
+one bounded final-head automated review on new stable head
+```
+
+This is artifact convergence, not recursive review for its own sake.
 
 ---
 
@@ -388,7 +462,7 @@ In particular:
 - correction prompts address only demonstrated current-implementation blockers;
 - suggestions do not expand implementation scope;
 - integration PR prompts invoke `integration-pr-review`;
-- correction-finalization prompts do **not** restart automated review merely because the approved correction changed the head.
+- correction-finalization prompts require one bounded final-head automated review after an approved validated-blocker correction changes the pushed production-bound head; they do not trigger repeated automated review when no subsequent implementation correction changes the artifact.
 
 ---
 
@@ -405,49 +479,57 @@ universal pre-return completion gate
   ├── MATERIAL BLOCKER → return exact blocker → resume interrupted cycle after resolution
   └── READY FOR AGENT #2 REVIEW
              ↓
-        separate Agent #2:
-          Acceptance criteria met?
-          New bug/regression introduced?
-          Does it work?
+        separate Agent #2 complete-artifact review
+             ↓
+        blocker exposes shared behavior rule?
+             ├── Yes → bounded sibling-state/transition sweep
+             └── No
+             ↓
+        report all presently demonstrable issue-scoped blockers together
              ↓
         Yes -> No -> Yes?
-        ├── No → Agent #1 full correction
+        ├── No → Agent #1 coherent correction boundary
         │          ↓
         │       universal pre-return completion gate
         │          ├── MATERIAL BLOCKER
         │          └── READY FOR AGENT #2 RE-REVIEW
         │                     ↓
-        │                separate Agent #2 re-review
+        │                separate Agent #2 complete-artifact re-review
+        │                     ↓
+        │                directly related sibling failure after correction?
+        │                     ├── Yes → bounded churn analysis → one coherent correction boundary
+        │                     └── No
         └── Yes
                ↓
             commit / push / integration PR
                ↓
             one normal automated PR review
                ↓
-            evaluate findings against same three questions
+            independently disposition findings
                ↓
-            genuine current-PR blocker?
-              ├── No → suggestion backlog
-              └── Yes → Agent #1 full correction
+            validated current-PR blocker?
+              ├── No → merge after required CI/human approval
+              └── Yes → Agent #1 coherent correction
                          ↓
-                      universal pre-return completion gate
-                         ├── MATERIAL BLOCKER
-                         └── READY FOR AGENT #2 RE-REVIEW
-                                    ↓
-                               separate Agent #2 narrow re-review
-                                    ↓
-                               Yes -> No -> Yes = APPROVED — MERGE
-                                    ↓
-                               commit / push
-                                    ↓
-                               verify artifact + CI/human approval
-                                    ↓
-                               MERGE
+                      Agent #2 complete-artifact re-review
+                         ↓
+                      Yes -> No -> Yes = APPROVED — MERGE
+                         ↓
+                      commit / push exactly approved correction
+                         ↓
+                      one bounded final-head automated review
+                         ↓
+                      independently disposition findings
+                         ↓
+                      another validated blocker causing another correction?
+                         ├── Yes → repeat correction / re-review / final-head sequence
+                         └── No → CI / human approval → MERGE
                ↓
             intentionally boring promotion
 ```
 
 ---
+
 # Definition of workflow compliance
 
 An implementation follows this skill only when:
@@ -467,12 +549,16 @@ An implementation follows this skill only when:
 - Agent #1 returns for independent Agent #2 review/re-review only after the applicable ready state is reached;
 - Agent #2 is separately invoked;
 - review is governed by the three questions;
-- only acceptance failures, implementation-introduced regressions, or non-working behavior require correction;
+- only original-acceptance failures, implementation-introduced regressions, or non-working behavior require correction;
+- validated corrections address the coherent issue-scoped behavior boundary rather than only the reported permutation;
+- diagnostic models, scenario matrices, reviewer-generated examples, and hardening ideas do not become new acceptance criteria;
+- repeated directly related sibling failures in the same subsystem trigger bounded churn analysis before another correction;
 - suggestions do not expand the current implementation;
 - non-blocking observations route to `Application Improvement Suggestions`;
-- automated findings are independently evaluated;
-- correction re-review is narrow;
+- automated findings are independently evaluated as evidence, not authority;
+- correction re-review evaluates the complete current artifact;
 - `Yes -> No -> Yes` yields approval;
-- integration PR corrections do not automatically restart automated review;
+- a validated blocker correction that changes the pushed production-bound PR head requires one bounded final-head automated review;
+- repeated automated review without another implementation correction changing the artifact is not required;
 - required CI and human approval remain in force;
 - promotion remains intentionally boring.
