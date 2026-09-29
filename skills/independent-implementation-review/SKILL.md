@@ -51,6 +51,25 @@ Yes -> No -> Yes = APPROVED — MERGE
 
 Anything that does not cause one of those three answers to fail is not a blocker for the current implementation.
 
+## Acceptance-scope preservation
+
+Review analysis does not redefine the governing issue.
+
+Diagnostic state models, scenario matrices, reviewer-generated examples, exploratory cases, automated examples, and hardening ideas do **not** become new acceptance criteria.
+
+The governing questions remain:
+
+1. Are the **original issue acceptance criteria** met?
+2. Has the current artifact introduced or materially worsened a bug/regression?
+3. Does the implemented behavior work?
+
+A missing reviewer-invented test, scenario, matrix row, or diagnostic example is not blocking merely because the reviewer identified it.
+
+It becomes blocking only when:
+
+- the original issue acceptance criteria require it; or
+- it demonstrates an actual implementation defect/regression in the current artifact.
+
 ---
 
 # Invocation boundary
@@ -102,6 +121,23 @@ A blocker should identify:
 5. the correction outcome required.
 
 Do not classify a finding as blocking merely because it is technically valid, security-related, architectural, or worth improving.
+
+## Directly related blocker sweep
+
+When a blocker demonstrates a failure in an issue-scoped state, transition, authority rule, recovery path, or other behavior model that directly governs sibling cases, Agent #2 must inspect enough of that directly related behavior family to determine whether the same demonstrated cause creates additional **present blockers**.
+
+Report those currently demonstrable blockers together.
+
+The sweep is bounded by:
+
+- the original issue acceptance criteria;
+- the changed behavior;
+- the demonstrated regression surface;
+- directly interacting states/transitions governed by the same demonstrated behavior rule.
+
+This is **not** permission to perform general repository archaeology, exhaustive combinatorial testing, speculative edge-case generation, backlog growth, unrelated architecture review, or future hardening.
+
+The sweep discovers evidence. It does not create requirements.
 
 ---
 
@@ -157,33 +193,62 @@ A suggestion becomes its own issue only when the builder/workflow owner delibera
 1. Read the governing issue and acceptance criteria.
 2. Inspect the actual current implementation diff/artifact.
 3. Trace only the surrounding execution paths needed to evaluate the changed behavior.
-4. Run or inspect appropriate validation evidence.
-5. Answer the three governing questions.
-6. Report all presently identifiable **current-implementation blockers** together.
-7. Record worthwhile non-blocking observations under **Suggestions** without expanding the implementation scope.
-8. Return the explicit verdict.
+4. If a blocker exposes a directly interacting issue-scoped state/transition family governed by the same demonstrated behavior rule, perform the bounded directly related blocker sweep before ending the review.
+5. Run or inspect appropriate validation evidence.
+6. Answer the three governing questions.
+7. Report all presently identifiable **current-implementation blockers** together.
+8. Record worthwhile non-blocking observations under **Suggestions** without expanding the implementation scope.
+9. Return the explicit verdict.
 
-Keep the existing anti-drip-feeding rule for blockers: if multiple concrete reasons currently make one of the three governing questions fail, report them in the same pass when reasonably identifiable.
+Keep the existing anti-drip-feeding rule for blockers: if multiple concrete reasons currently make one of the three governing questions fail, report them in the same pass when reasonably identifiable. After one blocker reveals a directly related issue-scoped behavior family, do not stop reasoning at the first failing permutation; perform the bounded sibling sweep needed to identify currently demonstrable blockers from that same cause.
 
-That rule does not require enumerating every possible application improvement.
+That rule does not require enumerating every possible application improvement, testing every combinatorial permutation, or inventing additional acceptance criteria.
 
 ---
 
 # Correction re-review
 
-Correction re-review is intentionally narrow.
+Correction re-review is intentionally narrow but must evaluate the complete current artifact against the three governing questions.
 
 Agent #2 must:
 
 1. inspect the corrected artifact;
-2. verify the reported blocker was corrected;
+2. verify that the demonstrated defect/root cause was corrected across its directly affected issue-scoped behavior boundary, not merely that the previously reported example changed;
 3. inspect the complete current implementation sufficiently to answer the three governing questions again;
-4. determine whether the correction itself introduced a new bug/regression;
-5. return the three answers and verdict.
+4. when the corrected behavior exposes a directly interacting sibling state/transition governed by the same demonstrated rule, perform the bounded directly related blocker sweep;
+5. determine whether the correction itself introduced a new bug/regression;
+6. report all presently demonstrable current-implementation blockers together;
+7. return the three answers and verdict.
 
 Do not restart an open-ended architecture audit.
 
-Do not search for unrelated defects merely because the PR has changed.
+Do not search for unrelated defects merely because the artifact has changed.
+
+## Correction-churn trigger
+
+Do not perform state-transition analysis as mandatory ceremony for an ordinary first-pass correction.
+
+Trigger bounded churn analysis only when a correction in the same behavioral subsystem fails re-review because of another directly related state/transition governed by the same or closely coupled behavior model:
+
+```text
+initial blocker
+  ↓
+Agent #1 correction
+  ↓
+directly related sibling failure in same behavioral subsystem
+  ↓
+bounded issue-scoped model/state-transition analysis
+  ↓
+one coherent correction boundary
+```
+
+Before another correction:
+
+- identify the coherent authority/state/transition rules that govern the demonstrated failures;
+- identify all currently demonstrable blockers within the original issue scope and demonstrated regression surface;
+- establish one coherent correction boundary for Agent #1.
+
+The analysis remains diagnostic. Its state models, scenario matrices, examples, and test ideas do not become new acceptance criteria.
 
 If the answers are:
 
@@ -303,7 +368,7 @@ Do not:
 - create a standalone follow-up issue for every observation;
 - hold the implementation open for suggestions.
 
-The goal is to determine whether the current change met its contract without introducing a new defect.
+The goal is to determine whether the current change met its contract without introducing a new defect. A bounded sibling-state/transition sweep or churn-triggered model analysis is part of that goal only when directly tied to a demonstrated issue-scoped blocker; it is not a general audit.
 
 ---
 
@@ -316,7 +381,10 @@ A review follows this skill only when:
 - the decision is based on the three governing questions;
 - only acceptance failures, change-introduced regressions, or non-working implemented behavior block advancement;
 - surrounding code is inspected only as far as needed to answer those questions;
+- when a blocker exposes a directly related issue-scoped behavior family, the reviewer performs a bounded sibling-state/transition sweep for the same demonstrated cause;
 - all presently identifiable current-implementation blockers are reported together when reasonably possible;
+- diagnostic models, matrices, examples, and reviewer-generated tests do not expand the original acceptance criteria;
+- a correction followed by another directly related sibling failure in the same subsystem triggers bounded churn analysis before another correction;
 - suggestions do not alter approval;
 - non-blocking observations are routed toward the consolidated `Application Improvement Suggestions` backlog rather than automatically becoming standalone issues;
 - correction re-review remains narrow and returns `APPROVED — MERGE` when the PR satisfies `Yes -> No -> Yes`;
