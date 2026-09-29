@@ -167,6 +167,7 @@ Where applicable, determine:
 
 - whether persisted data changes;
 - schema or migration requirements;
+- whether migrations or manual database operations must be executed in target environments;
 - query/read-model impact;
 - transaction boundaries;
 - uniqueness and referential constraints;
@@ -221,7 +222,13 @@ For email, payments, identity providers, conferencing, AI providers, storage, qu
 - expected success and failure behavior;
 - retry, timeout, cancellation, and idempotency concerns where applicable;
 - testability and local/staging behavior;
-- observability or operational signals needed.
+- observability or operational signals needed;
+- known environment variables or secrets;
+- provider-side configuration or webhook setup;
+- external resources that must exist in the target environment;
+- expected restart/redeploy requirements;
+- seed/UAT fixture needs;
+- post-deployment verification expectations.
 
 Do not create a second integration path when an established abstraction already exists unless the issue explicitly requires it.
 
@@ -382,6 +389,13 @@ READY | NOT READY
 ## External Integrations / Operational Concerns
 - ...
 
+## Known Environment / Deployment Requirements
+- <known requirement>
+
+—or—
+
+- None identified during readiness.
+
 ## Validation Plan
 - ...
 
@@ -406,7 +420,9 @@ READY | NOT READY
 - <specific existing patterns, files, abstractions, or architectural placement the implementation agent should follow>
 ```
 
-Do not add empty sections merely for ceremony when a dimension is genuinely irrelevant.
+Do not add empty sections merely for ceremony when a dimension is genuinely irrelevant, except that `Known Environment / Deployment Requirements` should be explicit because it is carried forward into implementation.
+
+Readiness captures what is known before implementation. `application-implementation-workflow` owns the authoritative Environment / Deployment Requirements and must update them as implementation reveals additional requirements.
 
 ---
 
@@ -508,6 +524,7 @@ A change has passed this skill only when:
 - the issue and acceptance boundary are understood;
 - the owning architecture and established patterns have been identified before new abstractions are proposed;
 - relevant contract, persistence, authorization, integration, UX, and operational impacts have been considered;
+- known anticipated environment/deployment requirements have been identified and carried forward, including an explicit `None identified during readiness` when none are known;
 - the expected validation surface is known;
 - adjacent risks and scope boundaries are explicit;
 - material ambiguity is clarified rather than guessed through;
