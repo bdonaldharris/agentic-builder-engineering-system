@@ -123,7 +123,9 @@ The normal flow is:
 
 Agent #2 remains independent from Agent #1.
 
-Automated-review findings are information, not commands, and must be independently evaluated against the same three-question contract.
+Automated-review findings are review inputs, not authoritative dispositions. Codex identifies findings; separately invoked Agent #2 determines their disposition under `independent-implementation-review` using the same three-question contract.
+
+Do not automatically inherit Codex's blocker classification, severity, or requested correction. Agent #1 receives correction work only after Agent #2 determines that correction is required.
 
 ---
 
@@ -209,31 +211,36 @@ Review the complete current PR artifact before returning.
 ```
 
 ---
-# Phase 3 — Evaluate automated findings
+# Phase 3 — Agent #2 disposition of automated findings
 
-For every automated finding, ask:
+After the automated/Codex review completes, invoke Agent #2 under `independent-implementation-review` to review the complete current artifact and disposition the automated findings.
 
-1. Does this show an acceptance criterion was not met?
+Codex identifies findings. Agent #2 determines their disposition.
+
+For every automated finding, Agent #2 independently asks:
+
+1. Does this show an original acceptance criterion was not met?
 2. Did this PR introduce or materially worsen a bug/regression?
-3. Does this show the changed behavior does not work?
+3. Does this show the implemented behavior does not work?
 
-If **none** applies:
+Codex severity, blocker language, or requested correction is not authoritative and must not be inherited automatically.
 
-```text
-Suggestion — Application Improvement Suggestions backlog
-```
+Agent #2 determines whether each finding:
 
-Do not correct the PR for that observation.
+- **requires correction** because one or more governing questions fail;
+- is **non-blocking or informational** because it does not make a governing question fail;
+- is **not valid** against the current artifact or governing contract;
+- belongs **outside the current issue boundary** and should be handled separately as follow-up, discovery, or backlog work when warranted.
 
-If one or more applies, it is a genuine current-PR blocker and may require correction.
+If none of the three governing questions fails, do not correct the PR for that observation.
 
-Do not begin correction after the first automated finding merely because it is valid. First finish dispositioning the complete automated-review result for the current stable head.
+Do not begin correction after the first automated finding merely because Codex labeled it blocking or severe. Agent #2 must finish reviewing the complete current artifact and dispositioning the complete automated-review result for the current stable head.
 
-When a validated finding exposes a directly related issue-scoped behavior family governed by the same demonstrated cause, use the bounded sibling-blocker semantics from `independent-implementation-review` before finalizing blocker disposition.
+When a validated finding exposes a directly related issue-scoped behavior family governed by the same demonstrated cause, Agent #2 applies the bounded sibling-blocker semantics from `independent-implementation-review` before finalizing disposition.
 
 Report all presently identifiable validated current-PR blockers together before correction begins.
 
-Do not accept automated severity labels, reviewer-generated scenarios, or blocker language without independently applying this contract.
+If Agent #2 determines that a finding is outside the current issue boundary, do not expand the current implementation scope. Return the warranted follow-up/discovery/backlog candidate to the workflow orchestrator for separate handling.
 
 Do not relitigate a previously adjudicated suggestion unless new evidence shows the current PR actually caused or materially worsened the problem.
 
@@ -276,7 +283,7 @@ Run **one bounded final-head automated/Codex review** on that new stable head us
 
 This final-head review is an **artifact-integrity gate**, not permission for recursive automated-review churn.
 
-Independently disposition every finding using the same three-question contract:
+Separately invoke Agent #2 to review the complete current artifact and independently disposition every final-head finding using the same three-question contract:
 
 1. Is an original issue acceptance criterion unmet?
 2. Did the current artifact introduce or materially worsen a bug/regression?
@@ -292,7 +299,7 @@ Diagnostic scenarios, reviewer-generated matrices, automated examples, and harde
 
 **Not required:** another automated review when no subsequent implementation correction changes the artifact.
 
-**Forbidden:** blindly obeying automated findings, treating reviewer severity as disposition, or allowing automated review to expand acceptance criteria.
+**Forbidden:** blindly obeying automated findings, treating reviewer severity as disposition, bypassing Agent #2 disposition, or allowing automated review to expand acceptance criteria.
 
 If the final-head automated review identifies another validated blocker and another correction materially changes the artifact, the normal production-bound sequence applies again because the artifact changed:
 
@@ -442,7 +449,7 @@ Correct only blockers demonstrated by the current change.
 
 # Automated reviewer discipline
 
-Automated reviewers surface evidence. They do not own disposition.
+Automated reviewers surface evidence. They do not own disposition. Codex identifies findings; Agent #2 determines whether those findings require correction, are non-blocking/informational, are invalid, or belong outside the current issue boundary.
 
 Do not:
 
@@ -458,7 +465,7 @@ Do:
 - run one normal automated review on the stable initial implementation head using the complete Canonical Codex Integration Review Request;
 - never treat a bare `@codex review` as the complete workflow request;
 - require the automated reviewer to complete the authorized issue-scoped review and consolidate presently identifiable blockers before correction;
-- independently evaluate every finding against the three governing questions;
+- route the complete automated-review result to separately invoked Agent #2 for independent disposition against the three governing questions;
 - correct only validated current-PR defects at their coherent issue-scoped behavior boundary;
 - use separate complete-artifact Agent #2 re-review for those corrections;
 - after Agent #2 approval and push of the exact approved correction, run one bounded final-head automated review because the production-bound artifact changed;
@@ -523,7 +530,10 @@ An integration PR follows this skill only when:
 - one normal automated review runs on the stable implementation head using the complete Canonical Codex Integration Review Request;
 - a bare `@codex review` by itself does not satisfy the workflow;
 - the automated reviewer is instructed to review the complete current PR artifact, avoid first-finding termination, and report all presently identifiable current-PR blockers together;
-- automated findings are independently evaluated rather than obeyed automatically;
+- automated findings are treated as review inputs rather than authoritative dispositions;
+- separately invoked Agent #2 determines each Codex finding's disposition against the complete current artifact and the three governing questions;
+- Codex severity, blocker labels, and requested corrections do not control Agent #1 correction work;
+- out-of-scope findings do not expand the current implementation and are returned to the workflow orchestrator for separate follow-up/discovery/backlog handling when warranted;
 - only original-acceptance failures, PR-introduced regressions, or non-working changed behavior require current correction;
 - diagnostic scenarios, matrices, automated examples, and reviewer-generated tests do not create new acceptance criteria;
 - suggestions do not hold the PR open;
