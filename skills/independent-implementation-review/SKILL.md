@@ -51,6 +51,29 @@ Yes -> No -> Yes = APPROVED — MERGE
 
 Anything that does not cause one of those three answers to fail is not a blocker for the current implementation.
 
+## Codex finding disposition
+
+When Codex review findings are present, Agent #2 treats them as review inputs, not authoritative dispositions.
+
+Agent #2 must independently review the complete current artifact and evaluate each Codex finding against the governing three questions:
+
+1. Are the acceptance criteria met?
+2. Was a new bug/regression introduced?
+3. Does the implemented behavior work?
+
+Agent #2 determines whether each Codex finding:
+
+- **requires correction** because one or more governing questions fail;
+- is **non-blocking or informational** because it does not make a governing question fail;
+- is **not valid** against the current artifact or governing contract;
+- represents **follow-up work outside the current issue boundary**.
+
+**Agent #2's determination, not Codex's severity label, blocker classification, or requested correction, controls whether Agent #1 is asked to make a correction.**
+
+If Agent #2 determines that a finding belongs outside the current issue boundary, do not expand the current implementation scope. Return the warranted follow-up, discovery, or backlog candidate to the workflow orchestrator for separate handling after disposition.
+
+A Codex finding does not automatically create follow-up work. Separate work is created only when Agent #2's determination shows it is warranted.
+
 ## Acceptance-scope preservation
 
 Review analysis does not redefine the governing issue.
@@ -186,19 +209,22 @@ Adding a suggestion does not imply severity, priority, production gating, commit
 
 A suggestion becomes its own issue only when the builder/workflow owner deliberately promotes it into planned work.
 
+When a Codex finding is determined to be outside the current issue boundary, keep it out of the current implementation. Return the warranted follow-up/discovery/backlog candidate to the workflow orchestrator for separate issue handling after Agent #2 disposition.
+
 ---
 
 # Initial review procedure
 
 1. Read the governing issue and acceptance criteria.
 2. Inspect the actual current implementation diff/artifact.
-3. Trace only the surrounding execution paths needed to evaluate the changed behavior.
-4. If a blocker exposes a directly interacting issue-scoped state/transition family governed by the same demonstrated behavior rule, perform the bounded directly related blocker sweep before ending the review.
-5. Run or inspect appropriate validation evidence.
-6. Answer the three governing questions.
-7. Report all presently identifiable **current-implementation blockers** together.
-8. Record worthwhile non-blocking observations under **Suggestions** without expanding the implementation scope.
-9. Return the explicit verdict.
+3. If Codex findings are present, treat them as review inputs and independently evaluate each against the complete current artifact and the three governing questions.
+4. Trace only the surrounding execution paths needed to evaluate the changed behavior.
+5. If a blocker exposes a directly interacting issue-scoped state/transition family governed by the same demonstrated behavior rule, perform the bounded directly related blocker sweep before ending the review.
+6. Run or inspect appropriate validation evidence.
+7. Answer the three governing questions.
+8. Report all presently identifiable **current-implementation blockers** together.
+9. Record worthwhile non-blocking observations under **Suggestions** without expanding the implementation scope.
+10. Return the explicit verdict.
 
 Keep the existing anti-drip-feeding rule for blockers: if multiple concrete reasons currently make one of the three governing questions fail, report them in the same pass when reasonably identifiable. After one blocker reveals a directly related issue-scoped behavior family, do not stop reasoning at the first failing permutation; perform the bounded sibling sweep needed to identify currently demonstrable blockers from that same cause.
 
@@ -349,7 +375,8 @@ To preserve independent review quality:
 - Agent #2 does not modify implementation while reviewing;
 - Agent #1's summary is context, not proof;
 - substantive changes after approval invalidate that approval for the changed artifact;
-- findings are independently evaluated rather than accepted merely because another reviewer emitted them.
+- findings are independently evaluated rather than accepted merely because another reviewer emitted them;
+- Codex severity, blocker labels, and requested corrections do not override Agent #2's disposition.
 
 ---
 
@@ -379,6 +406,10 @@ A review follows this skill only when:
 - Agent #2 is independently invoked;
 - the actual implementation artifact is reviewed;
 - the decision is based on the three governing questions;
+- when Codex findings are present, Agent #2 independently evaluates the complete current artifact and each finding before determining disposition;
+- Agent #2, not Codex severity or blocker labeling, determines whether Agent #1 receives correction work;
+- findings may be dispositioned as correction-required, non-blocking/informational, invalid, or outside the current issue boundary;
+- out-of-scope findings do not expand the current implementation and are returned to the workflow orchestrator for separate follow-up/discovery/backlog handling when warranted;
 - only acceptance failures, change-introduced regressions, or non-working implemented behavior block advancement;
 - surrounding code is inspected only as far as needed to answer those questions;
 - when a blocker exposes a directly related issue-scoped behavior family, the reviewer performs a bounded sibling-state/transition sweep for the same demonstrated cause;
