@@ -384,7 +384,7 @@ The intended production-bound PR flow is:
 3. route findings that do not fail one of those questions to `Application Improvement Suggestions`;
 4. correct only validated current-PR blockers; every Agent #1 correction remains governed by the global Agent #1 execution invariant, coherent correction boundary, churn trigger when applicable, and universal pre-return completion gate;
 5. use separate Agent #2 narrow correction re-review only after Agent #1 reaches `READY FOR AGENT #2 RE-REVIEW`;
-6. if Agent #2 returns `APPROVED — MERGE`, Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post `@codex review`, then stop;
+6. if Agent #2 returns `APPROVED — MERGE`, Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post the complete canonical Codex Integration Review Request defined by `integration-pr-review`, then stop;
 7. verify the pushed artifact matches what Agent #2 reviewed;
 8. because the production-bound PR head changed, run one bounded final-head automated/Codex review on that new stable head;
 9. independently disposition every final-head finding against the same three governing questions;
@@ -520,7 +520,7 @@ In particular:
 - correction prompts address only demonstrated current-implementation blockers;
 - suggestions do not expand implementation scope;
 - integration PR prompts invoke `integration-pr-review`;
-- correction-finalization prompts require one bounded final-head automated review after an approved validated-blocker correction changes the pushed production-bound head; they do not trigger repeated automated review when no subsequent implementation correction changes the artifact.
+- correction-finalization prompts require one bounded final-head automated review after an approved validated-blocker correction changes the pushed production-bound head; that review must use the complete canonical Codex Integration Review Request from `integration-pr-review`, not a bare trigger, and must not repeat when no subsequent implementation correction changes the artifact.
 
 ---
 
