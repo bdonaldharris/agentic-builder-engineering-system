@@ -148,14 +148,67 @@ If the pushed artifact differs materially from the artifact Agent #2 approved, s
 
 Run the repository's normal automated/Codex PR review on the stable implementation head.
 
-For Codex, use a top-level review request. A bare trigger is acceptable if repository automation needs only the trigger; if a canonical repository-specific request exists, use it.
+For Codex, post a **new top-level PR comment using the Canonical Codex Integration Review Request below**.
 
-Do not use the automated reviewer as an open-ended recursive review engine.
+`@codex review` is the technical invocation trigger only. A bare `@codex review` by itself is **not** the complete review request required by this workflow and does **not** satisfy this phase.
+
+The governing model is:
+
+> **Exhaustive within the authorized issue boundary; narrow outside it.**
+
+The automated reviewer must complete its bounded review of the authorized issue-scoped behavior before returning findings.
+
+It must not intentionally stop after the first defect.
+
+When one demonstrated defect exposes a shared issue-scoped state, transition, authority, recovery, or other behavior rule, the automated reviewer must inspect enough of the directly affected sibling behavior family to identify additional **present current-PR blockers** caused by the same rule.
+
+Report all presently identifiable current-PR blockers together before correction begins.
+
+This does **not** authorize general repository archaeology, unrelated architecture review, speculative hardening, exhaustive combinatorial testing, acceptance-criteria expansion, or backlog growth.
 
 Wait for the normal automated review to complete and evaluate each finding independently.
 
----
+## Canonical Codex Integration Review Request
 
+Use this complete top-level PR comment for both:
+
+- the normal automated review on the stable initial PR head;
+- the bounded final-head artifact-integrity review after a validated correction changes the pushed PR head.
+
+```markdown
+@codex review
+
+Review the complete current PR artifact against the governing issue and the current stable PR head.
+
+Use only this governing contract:
+
+1. Are the original issue acceptance criteria met?
+2. Did this PR introduce or materially worsen a bug/regression?
+3. Does the implemented behavior work?
+
+Inspect only the relevant surrounding execution paths needed to answer those three questions.
+
+Do not stop after the first defect.
+
+If a demonstrated defect exposes a shared issue-scoped state, transition, authority, recovery, or other behavior rule, perform a bounded sweep of the directly interacting states/transitions governed by that same rule.
+
+Report all presently identifiable current-PR blockers together before returning the review.
+
+Separate findings into:
+- Blocking: demonstrates at least one failure of the three governing questions above.
+- Non-blocking: valid observation that does not fail any of the three governing questions.
+- Informational: useful context that does not affect merge eligibility.
+
+Diagnostic scenarios, matrices, reviewer-generated examples, and test ideas do not create new acceptance criteria.
+
+Do not expand this review into general repository archaeology, unrelated architecture review, speculative hardening, exhaustive combinatorial testing, backlog growth, or unrelated product behavior.
+
+Automated severity or reviewer language is evidence, not authority. Every finding must be independently dispositioned against the three governing questions.
+
+Review the complete current PR artifact before returning.
+```
+
+---
 # Phase 3 — Evaluate automated findings
 
 For every automated finding, ask:
@@ -174,7 +227,11 @@ Do not correct the PR for that observation.
 
 If one or more applies, it is a genuine current-PR blocker and may require correction.
 
+Do not begin correction after the first automated finding merely because it is valid. First finish dispositioning the complete automated-review result for the current stable head.
+
 When a validated finding exposes a directly related issue-scoped behavior family governed by the same demonstrated cause, use the bounded sibling-blocker semantics from `independent-implementation-review` before finalizing blocker disposition.
+
+Report all presently identifiable validated current-PR blockers together before correction begins.
 
 Do not accept automated severity labels, reviewer-generated scenarios, or blocker language without independently applying this contract.
 
@@ -199,7 +256,7 @@ If a genuine current-PR blocker exists:
    - Does it work?
 9. If the result is `Yes -> No -> Yes`, Agent #2 returns:
    `APPROVED — MERGE`
-10. Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post `@codex review`, then stop.
+10. Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post the complete canonical Codex Integration Review Request defined by this skill, then stop.
 11. Confirm the pushed commit represents the artifact Agent #2 reviewed.
 12. Because the production-bound PR head changed, run the bounded final-head automated review defined below.
 
@@ -215,7 +272,7 @@ Diagnostic state models, scenario matrices, reviewer-generated examples, and aut
 
 After Agent #2 returns `APPROVED — MERGE` for a validated blocker correction and Agent #1 commits/pushes exactly that approved correction, the production-bound PR head has changed.
 
-Run **one bounded final-head automated/Codex review** on that new stable head.
+Run **one bounded final-head automated/Codex review** on that new stable head using the same complete Canonical Codex Integration Review Request defined in Phase 2. A bare `@codex review` does not satisfy the final-head artifact-integrity gate.
 
 This final-head review is an **artifact-integrity gate**, not permission for recursive automated-review churn.
 
@@ -398,7 +455,9 @@ Do not:
 
 Do:
 
-- run one normal automated review on the stable initial implementation head;
+- run one normal automated review on the stable initial implementation head using the complete Canonical Codex Integration Review Request;
+- never treat a bare `@codex review` as the complete workflow request;
+- require the automated reviewer to complete the authorized issue-scoped review and consolidate presently identifiable blockers before correction;
 - independently evaluate every finding against the three governing questions;
 - correct only validated current-PR defects at their coherent issue-scoped behavior boundary;
 - use separate complete-artifact Agent #2 re-review for those corrections;
@@ -461,7 +520,9 @@ A final-head automated review occurs because a validated correction changed the 
 An integration PR follows this skill only when:
 
 - review is governed by the three questions;
-- one normal automated review runs on the stable implementation head;
+- one normal automated review runs on the stable implementation head using the complete Canonical Codex Integration Review Request;
+- a bare `@codex review` by itself does not satisfy the workflow;
+- the automated reviewer is instructed to review the complete current PR artifact, avoid first-finding termination, and report all presently identifiable current-PR blockers together;
 - automated findings are independently evaluated rather than obeyed automatically;
 - only original-acceptance failures, PR-introduced regressions, or non-working changed behavior require current correction;
 - diagnostic scenarios, matrices, automated examples, and reviewer-generated tests do not create new acceptance criteria;
