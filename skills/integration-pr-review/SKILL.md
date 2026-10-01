@@ -5,6 +5,35 @@ description: Shorthand: pr-review. Review and gate an implementation pull reques
 
 # Integration PR Review
 
+## Executing agent identity
+
+**You are Agent #1 — Implementation Agent performing the integration/PR-finalization responsibilities assigned to Agent #1.**
+
+This skill invocation establishes your agent identity for the entire execution.
+
+**A skill invocation has one agent identity. That identity remains fixed for the entire execution. The executing agent may not change roles during the invocation.**
+
+As Agent #1 in this skill, you own the implementation-side PR responsibilities assigned by this workflow, including:
+
+- establishing and verifying the PR artifact;
+- posting the canonical Codex review request when required;
+- recording Agent #1 implementation/correction state;
+- performing validated corrections after a separately invoked Agent #2 requires them;
+- committing, pushing, and finalizing approved corrections;
+- merge/finalization actions assigned to Agent #1 after required independent disposition is present.
+
+You must **not**:
+
+- perform Agent #2's independent review or Codex-finding disposition;
+- create `[AGENT #2 — INDEPENDENT REVIEW]`;
+- treat Codex findings, Codex severity, or Codex silence as Agent #2 approval;
+- approve the current artifact on Agent #2's behalf;
+- change identity and continue through an Agent #2 stage in the same invocation.
+
+**Reaching another agent's workflow responsibility is a handoff boundary, not an instruction for the current agent to continue by assuming that responsibility.**
+
+A transition from Agent #1 to Agent #2 requires a separate agent invocation.
+
 ## Purpose
 
 This skill governs review and merge gating for implementation pull requests targeting the designated integration branch.
@@ -45,9 +74,11 @@ Production-bound workflow state must be recorded on the PR so subsequent one-lin
 
 Use the existing structured markers:
 
-- `[AGENT #1 — IMPLEMENTATION]`
-- `[AGENT #1 — CORRECTION]`
-- `[AGENT #2 — INDEPENDENT REVIEW]`
+- Agent #1 owns `[AGENT #1 — IMPLEMENTATION]`
+- Agent #1 owns `[AGENT #1 — CORRECTION]`
+- Agent #2 owns `[AGENT #2 — INDEPENDENT REVIEW]`
+
+An agent must never create a workflow-state comment representing the other agent.
 
 Do not assume the absolute newest PR comment is the relevant workflow state. PRs may contain human comments, Codex comments, inline review comments, CI activity, and other discussion.
 
@@ -150,9 +181,11 @@ The normal flow is:
 
 Agent #2 remains independent from Agent #1.
 
-Automated-review findings are review inputs, not authoritative dispositions. Codex identifies findings; separately invoked Agent #2 determines their disposition under `independent-implementation-review` using the same three-question contract.
+Automated-review findings are review inputs, not authoritative dispositions. **Codex is a review input, not Agent #2.** Codex review does not constitute Agent #2 review.
 
-Do not automatically inherit Codex's blocker classification, severity, or requested correction. Agent #1 receives correction work only after Agent #2 determines that correction is required.
+Codex identifies findings; separately invoked Agent #2 determines their disposition under `independent-implementation-review` using the same three-question contract.
+
+Do not automatically inherit Codex's blocker classification, severity, or requested correction. Codex returning no findings does not authorize Agent #1 to declare Agent #2 approval. Agent #1 receives correction work only after Agent #2 determines that correction is required.
 
 ---
 
@@ -196,7 +229,9 @@ Report all presently identifiable current-PR blockers together before correction
 
 This does **not** authorize general repository archaeology, unrelated architecture review, speculative hardening, exhaustive combinatorial testing, acceptance-criteria expansion, or backlog growth.
 
-Wait for the normal automated review to complete and evaluate each finding independently.
+Wait for the normal automated review to complete. Agent #1 may record the Codex findings and the required handoff state, but must not independently disposition them as Agent #2.
+
+After Codex review completes, Agent #1 stops at the Agent #2 boundary. A separately invoked Agent #2 must perform independent disposition under `independent-implementation-review`.
 
 ## Canonical Codex Integration Review Request
 
@@ -239,9 +274,13 @@ Review the complete current PR artifact before returning.
 ```
 
 ---
-# Phase 3 — Agent #2 disposition of automated findings
+# Phase 3 — Agent #2 disposition boundary
 
-After the automated/Codex review completes, invoke Agent #2 under `independent-implementation-review` to review the complete current artifact and disposition the automated findings.
+This phase is **not executable by the current Agent #1 invocation**.
+
+After the automated/Codex review completes, Agent #1 must stop.
+
+A separately invoked Agent #2 under `independent-implementation-review` reviews the complete current artifact and dispositions the automated findings.
 
 Codex identifies findings. Agent #2 determines their disposition.
 
@@ -278,6 +317,8 @@ Do not relitigate a previously adjudicated suggestion unless new evidence shows 
 
 # Phase 4 — Current-PR correction
 
+This phase begins only in a new/separate Agent #1 invocation after an Agent #2 disposition requiring correction is present on the PR.
+
 If a genuine current-PR blocker exists:
 
 1. Agent #1 reads the latest applicable `[AGENT #2 — INDEPENDENT REVIEW]` PR disposition and inspects the complete current PR artifact;
@@ -287,7 +328,7 @@ If a genuine current-PR blocker exists:
 5. Agent #1 runs relevant validation and applies the universal pre-return completion gate from `application-implementation-workflow`.
 6. Agent #1 posts a new `[AGENT #1 — CORRECTION]` workflow-state comment to the PR.
 7. Agent #1 may return control only at `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER`.
-8. Separately invoked Agent #2 performs the complete-artifact correction re-review under `independent-implementation-review` only after `READY FOR AGENT #2 RE-REVIEW` and posts its resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR.
+8. at `READY FOR AGENT #2 RE-REVIEW`, Agent #1 stops; a separately invoked Agent #2 performs the complete-artifact correction re-review under `independent-implementation-review` and posts its resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR.
 9. If that re-review finds another directly related sibling failure in the same behavioral subsystem, apply the churn-triggered bounded model/state-transition analysis before another correction.
 10. Agent #2 answers:
    - Original acceptance criteria met?
@@ -315,7 +356,9 @@ Run **one bounded final-head automated/Codex review** on that new stable head us
 
 This final-head review is an **artifact-integrity gate**, not permission for recursive automated-review churn.
 
-Separately invoke Agent #2 to review the complete current artifact, use prior PR workflow-state comments only as history, independently disposition every final-head finding using the same three-question contract, and post the resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR:
+After the final-head Codex review completes, Agent #1 may record the findings and required handoff state, then must stop. Codex is not Agent #2 and does not authorize Agent #1 to disposition findings.
+
+A separately invoked Agent #2 reviews the complete current artifact, uses prior PR workflow-state comments only as history, independently dispositions every final-head finding using the same three-question contract, and posts the resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR:
 
 1. Is an original issue acceptance criterion unmet?
 2. Did the current artifact introduce or materially worsen a bug/regression?
@@ -481,7 +524,7 @@ Correct only blockers demonstrated by the current change.
 
 # Automated reviewer discipline
 
-Automated reviewers surface evidence. They do not own disposition. Codex identifies findings; Agent #2 determines whether those findings require correction, are non-blocking/informational, are invalid, or belong outside the current issue boundary.
+Automated reviewers surface evidence. They do not own disposition. Codex is not Agent #2. Codex identifies findings; only a separately invoked Agent #2 determines whether those findings require correction, are non-blocking/informational, are invalid, or belong outside the current issue boundary.
 
 Do not:
 
@@ -558,6 +601,12 @@ A final-head automated review occurs because a validated correction changed the 
 
 An integration PR follows this skill only when:
 
+- the skill immediately establishes the executing agent as Agent #1 for the full invocation;
+- Agent #1 never changes identity or assumes Agent #2 responsibilities during the invocation;
+- Codex is a review input, not Agent #2, and Codex silence/finding labels never substitute for Agent #2 disposition;
+- every Agent #2 disposition requires a separate `independent-implementation-review` invocation;
+- reaching an Agent #2 review/disposition boundary is a hard stop for Agent #1;
+- Agent #1 never creates `[AGENT #2 — INDEPENDENT REVIEW]`;
 - PR comments using the structured Agent #1/Agent #2 markers are the durable workflow-history record while the current PR artifact remains authoritative for source state;
 - the latest relevant workflow-state comment is selected by marker/current phase rather than by assuming the newest PR comment is relevant;
 - Agent #1 implementation/correction state and Agent #2 review/disposition state are posted back to the PR;
