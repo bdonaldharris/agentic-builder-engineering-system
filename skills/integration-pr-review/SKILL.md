@@ -15,9 +15,9 @@ Its job is to answer whether the current PR should merge.
 
 ## Invocation model
 
-The pull request and its governing issue are the authoritative sources of PR-specific implementation context, acceptance criteria, and changed artifact state.
+The pull request and its governing issue are the durable system of record for PR-specific requirements and workflow history/state. The current PR head/artifact remains authoritative for what actually exists.
 
-This skill owns the reusable integration-PR review procedure. The invocation prompt does not need to restate the review contract or workflow rules already defined here.
+This skill owns the reusable integration-PR review procedure. The invocation prompt does not need to restate the review contract, prior Agent #1/Agent #2 execution state, Codex disposition history, or workflow rules already recorded on the PR and defined here.
 
 When the agent is already operating in the correct repository workspace, a minimal invocation is sufficient, for example:
 
@@ -36,6 +36,33 @@ Does it work? Yes
 
 = MERGE
 ```
+
+---
+
+# Durable PR workflow state
+
+Production-bound workflow state must be recorded on the PR so subsequent one-line agent invocations can continue without reconstructing context from ChatGPT history.
+
+Use the existing structured markers:
+
+- `[AGENT #1 — IMPLEMENTATION]`
+- `[AGENT #1 — CORRECTION]`
+- `[AGENT #2 — INDEPENDENT REVIEW]`
+
+Do not assume the absolute newest PR comment is the relevant workflow state. PRs may contain human comments, Codex comments, inline review comments, CI activity, and other discussion.
+
+For the current phase:
+
+1. inspect the PR and governing issue;
+2. identify the latest relevant workflow-state comment by marker;
+3. inspect the current PR head/artifact;
+4. use applicable prior workflow-state comments as historical context;
+5. perform the action defined by this skill;
+6. record the resulting Agent #1 or Agent #2 state back to the PR.
+
+The current PR head/artifact is authoritative. Workflow-state comments record what agents did, found, and decided; they do not override source state.
+
+The latest relevant structured comment should provide enough context for the next agent invocation to continue without a manually constructed history prompt.
 
 ---
 
@@ -135,6 +162,7 @@ Confirm:
 
 - repository;
 - PR number;
+- latest relevant Agent #1 and Agent #2 workflow-state comments for the current phase;
 - governing issue;
 - source and target branches;
 - current PR head SHA;
@@ -240,7 +268,9 @@ When a validated finding exposes a directly related issue-scoped behavior family
 
 Report all presently identifiable validated current-PR blockers together before correction begins.
 
-If Agent #2 determines that a finding is outside the current issue boundary, do not expand the current implementation scope. Return the warranted follow-up/discovery/backlog candidate to the workflow orchestrator for separate handling.
+If Agent #2 determines that a finding is outside the current issue boundary, do not expand the current implementation scope. Record that determination in the `[AGENT #2 — INDEPENDENT REVIEW]` PR comment and return the warranted follow-up/discovery/backlog candidate to the workflow orchestrator for separate handling.
+
+After dispositioning the complete automated-review result, Agent #2 posts the structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the PR, including the three governing answers, validated blockers, Codex dispositions, follow-up/out-of-scope determinations, and verdict.
 
 Do not relitigate a previously adjudicated suggestion unless new evidence shows the current PR actually caused or materially worsened the problem.
 
@@ -250,22 +280,24 @@ Do not relitigate a previously adjudicated suggestion unless new evidence shows 
 
 If a genuine current-PR blocker exists:
 
-1. Agent #1 corrects the validated blocker using the coherent correction-boundary rules defined by `application-implementation-workflow`, not merely the single reported permutation.
-2. Agent #1 completes the full executable correction required by that coherent issue-scoped behavior boundary, including correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related work required for the corrected artifact to function as intended.
-3. Agent #1 continues resolving build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact. Unrelated pre-existing failures must be evidenced and reported separately and do not require correction-scope expansion merely to achieve a globally green suite.
-4. Agent #1 runs relevant validation and applies the universal pre-return completion gate from `application-implementation-workflow`.
-5. Agent #1 may return control only at `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER`.
-6. Separately invoked Agent #2 performs the complete-artifact correction re-review under `independent-implementation-review` only after `READY FOR AGENT #2 RE-REVIEW`.
-7. If that re-review finds another directly related sibling failure in the same behavioral subsystem, apply the churn-triggered bounded model/state-transition analysis before another correction.
-8. Agent #2 answers:
+1. Agent #1 reads the latest applicable `[AGENT #2 — INDEPENDENT REVIEW]` PR disposition and inspects the complete current PR artifact;
+2. Agent #1 corrects the validated blocker using the coherent correction-boundary rules defined by `application-implementation-workflow`, not merely the single reported permutation.
+3. Agent #1 completes the full executable correction required by that coherent issue-scoped behavior boundary, including correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related work required for the corrected artifact to function as intended.
+4. Agent #1 continues resolving build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact. Unrelated pre-existing failures must be evidenced and reported separately and do not require correction-scope expansion merely to achieve a globally green suite.
+5. Agent #1 runs relevant validation and applies the universal pre-return completion gate from `application-implementation-workflow`.
+6. Agent #1 posts a new `[AGENT #1 — CORRECTION]` workflow-state comment to the PR.
+7. Agent #1 may return control only at `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER`.
+8. Separately invoked Agent #2 performs the complete-artifact correction re-review under `independent-implementation-review` only after `READY FOR AGENT #2 RE-REVIEW` and posts its resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR.
+9. If that re-review finds another directly related sibling failure in the same behavioral subsystem, apply the churn-triggered bounded model/state-transition analysis before another correction.
+10. Agent #2 answers:
    - Original acceptance criteria met?
    - New bug/regression introduced?
    - Does it work?
-9. If the result is `Yes -> No -> Yes`, Agent #2 returns:
+11. If the result is `Yes -> No -> Yes`, Agent #2 returns:
    `APPROVED — MERGE`
-10. Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post the complete canonical Codex Integration Review Request defined by this skill, then stop.
-11. Confirm the pushed commit represents the artifact Agent #2 reviewed.
-12. Because the production-bound PR head changed, run the bounded final-head automated review defined below.
+12. Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post the complete canonical Codex Integration Review Request defined by this skill, then stop.
+13. Confirm the pushed commit represents the artifact Agent #2 reviewed.
+14. Because the production-bound PR head changed, run the bounded final-head automated review defined below.
 
 Correction work must not expand into suggestions or unrelated cleanup.
 
@@ -283,7 +315,7 @@ Run **one bounded final-head automated/Codex review** on that new stable head us
 
 This final-head review is an **artifact-integrity gate**, not permission for recursive automated-review churn.
 
-Separately invoke Agent #2 to review the complete current artifact and independently disposition every final-head finding using the same three-question contract:
+Separately invoke Agent #2 to review the complete current artifact, use prior PR workflow-state comments only as history, independently disposition every final-head finding using the same three-question contract, and post the resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR:
 
 1. Is an original issue acceptance criterion unmet?
 2. Did the current artifact introduce or materially worsen a bug/regression?
@@ -489,7 +521,7 @@ Yes -> No -> Yes?
           ↓
       one normal automated review on stable initial head
           ↓
-      independently disposition findings
+      Agent #2 disposition recorded on PR
           ↓
       validated current-PR blocker?
          ├── No → CI / human approval → MERGE
@@ -511,7 +543,7 @@ Yes -> No -> Yes?
                                ↓
                             one bounded final-head automated review
                                ↓
-                            independently disposition findings
+                            Agent #2 disposition recorded on PR
                                ↓
                             another validated blocker?
                                ├── No → CI / human approval → MERGE
@@ -526,6 +558,9 @@ A final-head automated review occurs because a validated correction changed the 
 
 An integration PR follows this skill only when:
 
+- PR comments using the structured Agent #1/Agent #2 markers are the durable workflow-history record while the current PR artifact remains authoritative for source state;
+- the latest relevant workflow-state comment is selected by marker/current phase rather than by assuming the newest PR comment is relevant;
+- Agent #1 implementation/correction state and Agent #2 review/disposition state are posted back to the PR;
 - review is governed by the three questions;
 - one normal automated review runs on the stable implementation head using the complete Canonical Codex Integration Review Request;
 - a bare `@codex review` by itself does not satisfy the workflow;
