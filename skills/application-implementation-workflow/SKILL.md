@@ -297,7 +297,9 @@ Agent #1 returns control for Agent #2 only after the universal pre-return comple
 
 At either state, Agent #1 must stop. Agent #1 must not wait for Agent #2, poll for review state, monitor for a future disposition, create/simulate Agent #2 review, or continue merely because review is the expected next step.
 
-A separately invoked Agent #2 must perform the independent review. Agent #1 resumes only through a later separate invocation after an applicable durable `[AGENT #2 — INDEPENDENT REVIEW]` disposition exists.
+A separately invoked Agent #2 must perform the independent review. Agent #1 resumes only through a later separate invocation after an applicable durable `[AGENT #2 — INDEPENDENT REVIEW]` disposition exists on the governing Issue/PR.
+
+An Agent #2 response shown only in the agent conversation is not a durable disposition. Agent #1 must not treat review as complete or advance the workflow unless the corresponding Agent #2 workflow-state comment has been successfully recorded on the governing artifact.
 
 The requirement is a real workflow handoff, not merely a different persona.
 
@@ -746,6 +748,7 @@ An implementation follows this skill only when:
 - copy/paste operational handoffs are delivered as complete current authoritative artifacts unless a diff/patch/changed section is explicitly requested;
 - Agent #1 returns for independent Agent #2 review/re-review only after the applicable ready state is reached;
 - Agent #2 is separately invoked;
+- Agent #1 advances only from an Agent #2 disposition that is durably recorded on the governing Issue/PR; an agent-response-only review does not satisfy the handoff;
 - review is governed by the three questions;
 - only original-acceptance failures, implementation-introduced regressions, or non-working behavior require correction;
 - validated corrections address the coherent issue-scoped behavior boundary rather than only the reported permutation;
