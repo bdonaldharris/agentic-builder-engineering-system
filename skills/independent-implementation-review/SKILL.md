@@ -85,7 +85,17 @@ Before reviewing, Agent #2 must:
 3. use applicable prior Agent #2 comments as workflow history only;
 4. inspect the complete current artifact independently;
 5. perform this review;
-6. post a new structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the same Issue or PR.
+6. write a new structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the governing artifact;
+7. verify that the durable comment was successfully recorded before terminating the invocation.
+
+The governing artifact for the durable review record is:
+
+- the **Issue itself** for an implementation-stage Issue review;
+- the **PR itself** for a production-bound PR review, including Codex disposition and final-head review.
+
+The structured Agent #2 comment is part of workflow execution, not merely a report to the human. Producing the same review text in the agent response does not satisfy the durable-state requirement.
+
+If the durable write fails, Agent #2 must report that failure and must not claim that the review state was recorded. The invocation is not complete until the required durable record has been successfully written and verified.
 
 A prior review comment is never a substitute for reviewing the complete current artifact. If workflow-state comments conflict with the current repository state, the current artifact is authoritative.
 
@@ -336,8 +346,9 @@ When a Codex finding is determined to be outside the current issue boundary, kee
 8. Answer the three governing questions.
 9. Report all presently identifiable **current-implementation blockers** together.
 10. Record worthwhile non-blocking observations and follow-up/out-of-scope determinations without expanding implementation scope.
-11. Post the structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the governing Issue or PR.
-12. Return the explicit verdict.
+11. Write the structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the governing Issue or PR.
+12. Verify that the durable comment was successfully recorded on the governing artifact.
+13. Only after successful verification, return the explicit verdict. The final agent response may summarize the result, but it does not substitute for the GitHub durable record.
 
 Keep the existing anti-drip-feeding rule for blockers: if multiple concrete reasons currently make one of the three governing questions fail, report them in the same pass when reasonably identifiable. After one blocker reveals a directly related issue-scoped behavior family, do not stop reasoning at the first failing permutation; perform the bounded sibling sweep needed to identify currently demonstrable blockers from that same cause.
 
@@ -360,8 +371,9 @@ Agent #2 must:
 7. determine whether the correction itself introduced a new bug/regression;
 8. report all presently demonstrable current-implementation blockers together;
 9. record follow-up/out-of-scope determinations separately from current blockers;
-10. post a new `[AGENT #2 — INDEPENDENT REVIEW]` workflow-state comment to the same Issue/PR;
-11. return the three answers and verdict.
+10. write a new `[AGENT #2 — INDEPENDENT REVIEW]` workflow-state comment to the governing Issue/PR;
+11. verify that the durable comment was successfully recorded;
+12. only after successful verification, return the three answers and verdict. If the durable write fails, report the failure instead of claiming the workflow state was recorded.
 
 Do not restart an open-ended architecture audit.
 
@@ -490,7 +502,7 @@ For integration-PR correction/final-head re-review:
 APPROVED — MERGE | CHANGES REQUIRED
 ```
 
-A reviewer may include concise validation evidence, but the output should stay centered on the three governing questions. The same disposition must be posted to the governing Issue/PR as the structured `[AGENT #2 — INDEPENDENT REVIEW]` workflow-state comment.
+A reviewer may include concise validation evidence, but the output should stay centered on the three governing questions. The same disposition must be written to the governing Issue/PR as the structured `[AGENT #2 — INDEPENDENT REVIEW]` workflow-state comment and the successful write must be verified before the invocation terminates. A human-facing response is supplementary and does not satisfy the durable-state requirement.
 
 ---
 
@@ -541,7 +553,10 @@ A review follows this skill only when:
 - Agent #2 is independently invoked;
 - Agent #2 reads the governing Issue/PR and latest relevant Agent #1 workflow-state comment for the current phase;
 - prior workflow-state comments are treated as durable history, not as authority over the current artifact;
-- Agent #2 posts each review/disposition back to the same Issue/PR using `[AGENT #2 — INDEPENDENT REVIEW]`;
+- Agent #2 writes each review/disposition to the governing artifact using `[AGENT #2 — INDEPENDENT REVIEW]`: Issue for implementation-stage review, PR for production-bound review;
+- the Agent #2 invocation is not complete until that durable write has been successfully verified;
+- a final agent response does not substitute for the durable GitHub record;
+- if the durable write fails, Agent #2 reports the failure and does not claim that workflow state was recorded;
 - the actual implementation artifact is reviewed;
 - the decision is based on the three governing questions;
 - when Codex findings are present, Agent #2 independently evaluates the complete current artifact and every material finding before determining disposition;
