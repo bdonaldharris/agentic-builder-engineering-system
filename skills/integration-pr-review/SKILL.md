@@ -1,6 +1,6 @@
 ---
 name: integration-pr-review
-description: Shorthand: pr-review. Review and gate an implementation pull request using the narrow three-question contract: original acceptance criteria met, no new bug/regression introduced, and changed behavior works. Run one normal automated review on the stable initial head, independently evaluate findings, correct validated current-PR defects at their coherent issue-scoped behavior boundary, require complete-artifact Agent #2 re-review, and run one bounded final-head artifact-integrity review after each validated correction changes the pushed PR head.
+description: Shorthand: pr-review. Review and gate an implementation pull request using the narrow three-question contract: original acceptance criteria met, no new bug/regression introduced, and changed behavior works. Run one normal automated review on the stable initial head, terminate Agent #1 at Codex/Agent #2 handoffs, require separately invoked Agent #2 disposition, correct only validated current-PR defects at their coherent issue-scoped behavior boundary, and run one bounded final-head artifact-integrity review after each validated correction changes the pushed PR head.
 ---
 
 # Integration PR Review
@@ -28,7 +28,8 @@ You must **not**:
 - create `[AGENT #2 — INDEPENDENT REVIEW]`;
 - treat Codex findings, Codex severity, or Codex silence as Agent #2 approval;
 - approve the current artifact on Agent #2's behalf;
-- change identity and continue through an Agent #2 stage in the same invocation.
+- change identity and continue through an Agent #2 stage in the same invocation;
+- wait for, poll, monitor, sleep/retry for, or autonomously continue into a future Codex/Agent #2 state after a handoff has been posted.
 
 **Reaching another agent's workflow responsibility is a handoff boundary, not an instruction for the current agent to continue by assuming that responsibility.**
 
@@ -189,6 +190,55 @@ Do not automatically inherit Codex's blocker classification, severity, or reques
 
 ---
 
+# Invocation state machine
+
+At invocation start, inspect the governing issue, PR existence, current PR head, Codex review state, and the latest relevant structured Agent #1/Agent #2 workflow-state comments.
+
+Do not remain active waiting for a future state. A state that does not exist yet is a terminal boundary for the current invocation.
+
+## No PR exists
+
+When no integration PR exists and a durable Agent #2 approval exists for the exact approved implementation artifact, Agent #1 may:
+
+1. verify the approved artifact and current issue/implementation state;
+2. stage only the approved files;
+3. commit;
+4. push;
+5. open the PR against `staging`;
+6. record the applicable Agent #1 implementation state on the PR;
+7. post the complete canonical top-level Codex Integration Review Request.
+
+**Immediately after posting the canonical Codex review request, Agent #1 MUST STOP.**
+
+The Codex request is a terminal handoff. The current Agent #1 invocation ends after posting the request. A separate invocation is required after Codex returns.
+
+Agent #1 must **not**:
+
+- wait for Codex;
+- poll GitHub for Codex results;
+- sleep/retry while waiting;
+- monitor the PR for a future review state;
+- independently inspect or disposition Codex findings that appear later;
+- initiate or simulate Agent #2;
+- create an `[AGENT #2 — INDEPENDENT REVIEW]` record;
+- merge the PR.
+
+A request to "finalize" does not authorize Agent #1 to wait for or traverse a future review state.
+
+## PR already exists
+
+At invocation start, determine the durable state that actually exists for the exact current PR head:
+
+- **Codex requested, result not yet returned:** STOP immediately. Do not wait or poll.
+- **Codex findings returned, no Agent #2 disposition for the exact current stable head:** STOP immediately. A separately invoked Agent #2 must disposition the complete artifact and Codex findings.
+- **Agent #2 returned `CHANGES REQUIRED`:** STOP. Correction requires a separate Agent #1 invocation using `application-implementation-workflow`.
+- **Agent #2 approval exists, but the PR head differs from the artifact/head Agent #2 reviewed:** STOP. The approval is stale for merge purposes.
+- **Agent #2 approved the exact current PR head and all required final-head, CI, human-approval, Environment / Deployment Requirements, and other merge gates are satisfied:** Agent #1 may perform the authorized finalization/merge work.
+
+Each STOP above is terminal for the current invocation. Do not wait for the blocking state to change.
+
+---
+
 # Phase 1 — Establish the PR artifact
 
 Confirm:
@@ -229,9 +279,11 @@ Report all presently identifiable current-PR blockers together before correction
 
 This does **not** authorize general repository archaeology, unrelated architecture review, speculative hardening, exhaustive combinatorial testing, acceptance-criteria expansion, or backlog growth.
 
-Wait for the normal automated review to complete. Agent #1 may record the Codex findings and the required handoff state, but must not independently disposition them as Agent #2.
+After Agent #1 posts the complete canonical Codex request, **the current invocation ends immediately**.
 
-After Codex review completes, Agent #1 stops at the Agent #2 boundary. A separately invoked Agent #2 must perform independent disposition under `independent-implementation-review`.
+Do not wait for Codex, poll GitHub, sleep/retry, monitor the PR, or continue when Codex later returns. A future Codex result requires a separate invocation.
+
+When Codex findings exist, they are durable PR review inputs for a separately invoked Agent #2 under `independent-implementation-review`.
 
 ## Canonical Codex Integration Review Request
 
@@ -276,11 +328,9 @@ Review the complete current PR artifact before returning.
 ---
 # Phase 3 — Agent #2 disposition boundary
 
-This phase is **not executable by the current Agent #1 invocation**.
+This phase is **not executable by the Agent #1 invocation that posted the Codex request**; that invocation already terminated at the handoff.
 
-After the automated/Codex review completes, Agent #1 must stop.
-
-A separately invoked Agent #2 under `independent-implementation-review` reviews the complete current artifact and dispositions the automated findings.
+After Codex results exist, a separately invoked Agent #2 under `independent-implementation-review` reviews the complete current artifact and dispositions the automated findings.
 
 Codex identifies findings. Agent #2 determines their disposition.
 
@@ -317,7 +367,7 @@ Do not relitigate a previously adjudicated suggestion unless new evidence shows 
 
 # Phase 4 — Current-PR correction
 
-This phase begins only in a new/separate Agent #1 invocation after an Agent #2 disposition requiring correction is present on the PR.
+This phase does not continue inside the prior PR-review invocation. If Agent #2 returns `CHANGES REQUIRED`, the PR-review invocation is terminal. Correction begins only through a new/separate Agent #1 invocation using `application-implementation-workflow` after that durable Agent #2 disposition is present on the PR.
 
 If a genuine current-PR blocker exists:
 
@@ -336,9 +386,8 @@ If a genuine current-PR blocker exists:
    - Does it work?
 11. If the result is `Yes -> No -> Yes`, Agent #2 returns:
    `APPROVED — MERGE`
-12. Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post the complete canonical Codex Integration Review Request defined by this skill, then stop.
-13. Confirm the pushed commit represents the artifact Agent #2 reviewed.
-14. Because the production-bound PR head changed, run the bounded final-head automated review defined below.
+12. In a separate Agent #1 finalization invocation after Agent #2 approval, verify the approved artifact, commit and push exactly that approved correction, confirm the stable PR head matches the approved artifact, and post the complete canonical Codex Integration Review Request defined by this skill.
+13. **STOP immediately after posting the final-head Codex request.** Do not wait, poll, monitor, or continue into final-head disposition.
 
 Correction work must not expand into suggestions or unrelated cleanup.
 
@@ -350,15 +399,15 @@ Diagnostic state models, scenario matrices, reviewer-generated examples, and aut
 
 # Phase 5 — Final-head automated artifact-integrity review
 
-After Agent #2 returns `APPROVED — MERGE` for a validated blocker correction and Agent #1 commits/pushes exactly that approved correction, the production-bound PR head has changed.
+After Agent #2 returns `APPROVED — MERGE` for a validated blocker correction, a separate Agent #1 finalization invocation commits/pushes exactly that approved correction and confirms the new stable production-bound PR head.
 
-Run **one bounded final-head automated/Codex review** on that new stable head using the same complete Canonical Codex Integration Review Request defined in Phase 2. A bare `@codex review` does not satisfy the final-head artifact-integrity gate.
+Agent #1 then posts **one bounded final-head automated/Codex review** on that new stable head using the same complete Canonical Codex Integration Review Request defined in Phase 2. A bare `@codex review` does not satisfy the final-head artifact-integrity gate.
+
+**Posting the final-head Codex request is a terminal handoff. Agent #1 stops immediately.** Do not wait, poll, sleep/retry, monitor the PR, or autonomously continue after Codex returns.
 
 This final-head review is an **artifact-integrity gate**, not permission for recursive automated-review churn.
 
-After the final-head Codex review completes, Agent #1 may record the findings and required handoff state, then must stop. Codex is not Agent #2 and does not authorize Agent #1 to disposition findings.
-
-A separately invoked Agent #2 reviews the complete current artifact, uses prior PR workflow-state comments only as history, independently dispositions every final-head finding using the same three-question contract, and posts the resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR:
+After final-head Codex results exist, a separately invoked Agent #2 reviews the complete current artifact, uses prior PR workflow-state comments only as history, independently dispositions every material final-head Codex finding using the same three-question contract, and posts the resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR:
 
 1. Is an original issue acceptance criterion unmet?
 2. Did the current artifact introduce or materially worsen a bug/regression?
@@ -446,7 +495,8 @@ The PR is ready to merge when:
 - the current PR has not introduced an unresolved bug/regression;
 - the changed behavior works;
 - any genuine current-PR blockers found by automated review were corrected and re-approved by Agent #2 against the complete artifact;
-- the pushed artifact matches the artifact Agent #2 approved;
+- a durable Agent #2 approval exists for the exact current PR head;
+- the pushed artifact matches the artifact/head Agent #2 approved;
 - when a validated correction changed the pushed PR head, the required bounded final-head automated review has completed and no validated blocker remains;
 - `Environment / Deployment Requirements` has been explicitly surfaced, including `None` when no non-code actions are required;
 - required CI/checks are acceptable;
@@ -533,7 +583,8 @@ Do not:
 - convert diagnostic scenarios or automated examples into new acceptance criteria;
 - ask automated review to search broadly for unrelated production concerns;
 - hold the PR open for preexisting or adjacent issues;
-- run repeated automated reviews when no subsequent implementation correction changes the artifact.
+- run repeated automated reviews when no subsequent implementation correction changes the artifact;
+- wait, poll, sleep/retry, or monitor for a Codex/Agent #2 state after posting a terminal handoff.
 
 Do:
 
@@ -562,7 +613,11 @@ Yes -> No -> Yes?
           ↓
       commit / push / PR
           ↓
-      one normal automated review on stable initial head
+      post canonical Codex review request
+          ↓
+        STOP
+          ↓
+   separate Agent #2 invocation
           ↓
       Agent #2 disposition recorded on PR
           ↓
@@ -584,7 +639,11 @@ Yes -> No -> Yes?
                                ↓
                             commit / push exactly approved correction
                                ↓
-                            one bounded final-head automated review
+                            post bounded final-head Codex request
+                               ↓
+                             STOP
+                               ↓
+                      separate Agent #2 invocation
                                ↓
                             Agent #2 disposition recorded on PR
                                ↓
@@ -606,6 +665,9 @@ An integration PR follows this skill only when:
 - Codex is a review input, not Agent #2, and Codex silence/finding labels never substitute for Agent #2 disposition;
 - every Agent #2 disposition requires a separate `independent-implementation-review` invocation;
 - reaching an Agent #2 review/disposition boundary is a hard stop for Agent #1;
+- posting an initial or final-head canonical Codex review request is a terminal Agent #1 handoff; the invocation ends immediately afterward;
+- Agent #1 never waits, polls, sleeps/retries, monitors, or autonomously continues across a Codex/Agent #2 handoff boundary;
+- when an existing PR is not yet in a state authorized for Agent #1 action, Agent #1 stops rather than waiting for that state to appear;
 - Agent #1 never creates `[AGENT #2 — INDEPENDENT REVIEW]`;
 - PR comments using the structured Agent #1/Agent #2 markers are the durable workflow-history record while the current PR artifact remains authoritative for source state;
 - the latest relevant workflow-state comment is selected by marker/current phase rather than by assuming the newest PR comment is relevant;
