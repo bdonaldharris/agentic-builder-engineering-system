@@ -35,7 +35,14 @@ Structured workflow-state comments use recognizable markers so agents can identi
 [AGENT #2 — INDEPENDENT REVIEW]
 ```
 
-Agents should read the governing Issue/PR, identify the latest relevant workflow-state comment for the current phase, inspect the current artifact, perform the skill-defined work, and write the resulting state back to the same Issue/PR.
+Agents should read the governing Issue/PR, identify the latest relevant workflow-state comment for the current phase, inspect the current artifact, perform the skill-defined work, and write the resulting state back to the governing artifact.
+
+For Agent #2 review, the durable record is mandatory:
+
+- implementation-stage review → write `[AGENT #2 — INDEPENDENT REVIEW]` to the **Issue**;
+- production-bound review → write `[AGENT #2 — INDEPENDENT REVIEW]` to the **PR itself**.
+
+The Agent #2 invocation is not complete until that durable comment has been successfully written and verified. A review returned only in the agent response does not satisfy the workflow. If the durable write fails, Agent #2 must report the failure rather than claim the review state was recorded.
 
 ## Agent identity and role boundaries
 
@@ -70,6 +77,8 @@ Agent #1
 
 separate Agent #2 invocation
 → independent complete-artifact review
+→ write [AGENT #2 — INDEPENDENT REVIEW] to governing Issue/PR
+→ verify durable record exists
 → APPROVED or CHANGES REQUIRED
 → STOP
 
@@ -104,8 +113,8 @@ Canonical reusable engineering procedures live under `skills/`.
 - [`application-implementation-workflow`](skills/application-implementation-workflow/SKILL.md) (`implement-workflow`) — Executes as **Agent #1 — Implementation Agent** and governs scoped implementation/correction, durable Issue/PR workflow-state comments, environment/deployment requirement handoff, coherent issue-bound corrections, review handoff boundaries, bounded automated PR review, final-head artifact-integrity review, and intentionally boring promotion.
 - [`engineering-discovery-workflow`](skills/engineering-discovery-workflow/SKILL.md) (`eng-discovery`) — Governs evidence-based investigation of existing software systems before implementation, including capability classification, cross-layer tracing, gap analysis, and issue-ready discovery reporting without changing the system.
 - [`implementation-readiness-workflow`](skills/implementation-readiness-workflow/SKILL.md) (`readiness-workflow`) — Determines whether a defined change is sufficiently understood to implement responsibly by resolving material architectural, contract, data, authorization, integration, validation, and scope questions before coding begins.
-- [`independent-implementation-review`](skills/independent-implementation-review/SKILL.md) (`indep-review`) — Executes as **Agent #2 — Independent Review Agent** and defines the narrow three-question review contract, complete-artifact review, structured Issue/PR disposition comments, bounded sibling-state review, and auditable independent disposition of every material Codex finding. Agent #2 never performs implementation/correction work and stops with a handoff when changes are required.
-- [`integration-pr-review`](skills/integration-pr-review/SKILL.md) (`pr-review`) — Executes as **Agent #1 — Implementation Agent** for PR-side integration/finalization responsibilities. It governs durable PR workflow-state comments, terminal Codex handoffs with no waiting/polling, the canonical detailed Codex Integration Review Request, hard Agent #2 disposition boundaries, exact-head merge authorization, bounded final-head review, Environment / Deployment Requirements gating, and non-recursive merge convergence.
+- [`independent-implementation-review`](skills/independent-implementation-review/SKILL.md) (`indep-review`) — Executes as **Agent #2 — Independent Review Agent** and defines the narrow three-question review contract, complete-artifact review, required verified durable Issue/PR disposition comments, bounded sibling-state review, and auditable independent disposition of every material Codex finding. Agent #2 never performs implementation/correction work, and its invocation is not complete until the governing Issue/PR record has been successfully written and verified.
+- [`integration-pr-review`](skills/integration-pr-review/SKILL.md) (`pr-review`) — Executes as **Agent #1 — Implementation Agent** for PR-side integration/finalization responsibilities. It governs durable PR workflow-state comments, terminal Codex handoffs with no waiting/polling, the canonical detailed Codex Integration Review Request, hard Agent #2 disposition boundaries, required verified Agent #2 disposition on the PR itself, exact-head merge authorization, bounded final-head review, Environment / Deployment Requirements gating, and non-recursive merge convergence.
 
 ### Review contract
 
