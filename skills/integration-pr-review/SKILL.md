@@ -622,8 +622,8 @@ Yes -> No -> Yes?
       Agent #2 disposition recorded on PR
           ↓
       validated current-PR blocker?
-         ├── No → CI / human approval → MERGE
-         └── Yes → Agent #1 coherent correction
+         ├── No → later Agent #1 merge invocation after CI / human approval
+         └── Yes → STOP → separate Agent #1 correction invocation
                     ↓
                  universal pre-return completion gate
                     ├── MATERIAL BLOCKER
@@ -648,8 +648,8 @@ Yes -> No -> Yes?
                             Agent #2 disposition recorded on PR
                                ↓
                             another validated blocker?
-                               ├── No → CI / human approval → MERGE
-                               └── Yes → repeat correction / re-review / final-head sequence
+                               ├── No → later Agent #1 merge invocation after CI / human approval
+                               └── Yes → STOP → separate correction / re-review / final-head invocations
 ```
 
 A final-head automated review occurs because a validated correction changed the production-bound artifact. It does not recurse when the artifact has not changed again.
