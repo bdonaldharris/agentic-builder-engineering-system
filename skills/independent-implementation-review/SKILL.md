@@ -106,15 +106,20 @@ Current blockers:
 —or—
 - <validated blocker>
 
-Codex disposition:
-- None / Not applicable
+Codex findings and Agent #2 dispositions:
+- Not applicable — no applicable Codex findings were present
 —or—
-- <finding → requires correction | non-blocking/informational | not valid | outside current issue boundary>
+- <concise finding identification>
+  - Disposition: Requires correction | Non-blocking / informational | Not valid | Outside current issue boundary / follow-up
+  - Reason: <concise reason tied to one or more governing questions>
 
 Follow-up / Out of scope:
 - None
 —or—
 - <separate follow-up/discovery/backlog candidate>
+
+Validation:
+- <concise validation reviewed/run and result>
 
 Verdict: APPROVED | CHANGES REQUIRED | APPROVED — MERGE
 ```
@@ -161,6 +166,16 @@ Agent #2 determines whether each Codex finding:
 - is **non-blocking or informational** because it does not make a governing question fail;
 - is **not valid** against the current artifact or governing contract;
 - represents **follow-up work outside the current issue boundary**.
+
+For every material Codex finding that exists, the durable `[AGENT #2 — INDEPENDENT REVIEW]` comment must record:
+
+- a concise finding identification;
+- Agent #2's independent disposition;
+- a concise reason tied to the governing three-question contract.
+
+`Not applicable` is valid only when there are no applicable Codex findings to disposition. Never record `Codex disposition: Not applicable` when Codex actually returned applicable findings.
+
+If multiple material Codex findings exist, Agent #2 must disposition all of them in the same complete-artifact review rather than drip-feeding them across separate reviews.
 
 **Agent #2's determination, not Codex's severity label, blocker classification, or requested correction, controls whether Agent #1 is asked to make a correction.**
 
@@ -314,7 +329,7 @@ When a Codex finding is determined to be outside the current issue boundary, kee
 1. Read the governing Issue/PR, acceptance criteria, and relevant workflow-state comments.
 2. Identify the latest applicable `[AGENT #1 — IMPLEMENTATION]` or `[AGENT #1 — CORRECTION]` comment for the current phase without assuming the newest GitHub comment is relevant.
 3. Inspect the actual complete current implementation diff/artifact.
-4. If Codex findings are present, treat them as review inputs and independently evaluate each against the complete current artifact and the three governing questions.
+4. If Codex findings are present, treat them as review inputs and independently evaluate every material finding against the complete current artifact and the three governing questions; record each finding's disposition and concise governing-contract reason in the durable review comment.
 5. Trace only the surrounding execution paths needed to evaluate the changed behavior.
 6. If a blocker exposes a directly interacting issue-scoped state/transition family governed by the same demonstrated behavior rule, perform the bounded directly related blocker sweep before ending the review.
 7. Run or inspect appropriate validation evidence.
@@ -400,7 +415,7 @@ APPROVED — MERGE
 
 Suggestions discovered during re-review do not prevent approval.
 
-If the verdict is `CHANGES REQUIRED`, Agent #2 posts the structured review disposition and stops. Correction belongs to a separately invoked Agent #1.
+If the verdict is `CHANGES REQUIRED`, including when a Codex finding requires correction, Agent #2 records the blocker, the failed governing question(s), and the Codex disposition when applicable; then posts the structured review disposition and stops. Agent #2 does not perform the correction. Correction belongs to a separately invoked Agent #1.
 
 ---
 
@@ -519,7 +534,10 @@ A review follows this skill only when:
 - Agent #2 posts each review/disposition back to the same Issue/PR using `[AGENT #2 — INDEPENDENT REVIEW]`;
 - the actual implementation artifact is reviewed;
 - the decision is based on the three governing questions;
-- when Codex findings are present, Agent #2 independently evaluates the complete current artifact and each finding before determining disposition;
+- when Codex findings are present, Agent #2 independently evaluates the complete current artifact and every material finding before determining disposition;
+- every material Codex finding is explicitly recorded in the durable review comment with Agent #2's disposition and concise three-question reason;
+- `Not applicable` is used for Codex disposition only when no applicable Codex findings exist;
+- multiple material Codex findings are dispositioned together in the same review rather than drip-fed;
 - Agent #2, not Codex severity or blocker labeling, determines whether Agent #1 receives correction work;
 - findings may be dispositioned as correction-required, non-blocking/informational, invalid, or outside the current issue boundary;
 - out-of-scope findings do not expand the current implementation and are returned to the workflow orchestrator for separate follow-up/discovery/backlog handling when warranted;
