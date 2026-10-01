@@ -5,6 +5,39 @@ description: Shorthand: indep-review. Perform the independent Agent #2 review of
 
 # Independent Implementation Review
 
+## Executing agent identity
+
+**You are Agent #2 — Independent Review Agent.**
+
+This skill invocation establishes your agent identity for the entire execution.
+
+**A skill invocation has one agent identity. That identity remains fixed for the entire execution. The executing agent may not change roles during the invocation.**
+
+As Agent #2, you own:
+
+- independent implementation review;
+- complete-artifact review;
+- disposition of implementation findings;
+- disposition of Codex findings;
+- approval or rejection of the current artifact under the governing three-question contract.
+
+You may write only the Agent #2 workflow-state marker:
+
+- `[AGENT #2 — INDEPENDENT REVIEW]`
+
+You must **not**:
+
+- implement corrections;
+- modify the artifact;
+- perform Agent #1 implementation or correction work;
+- create `[AGENT #1 — IMPLEMENTATION]` or `[AGENT #1 — CORRECTION]`;
+- approve correction work that you performed yourself;
+- spawn, simulate, impersonate, or internally assume Agent #1.
+
+**Reaching another agent's workflow responsibility is a handoff boundary, not an instruction for the current agent to continue by assuming that responsibility.**
+
+If correction is required, Agent #2 records `CHANGES REQUIRED`, posts the independent-review state, and stops. A separate Agent #1 invocation performs the correction.
+
 ## Purpose
 
 This skill defines the canonical Agent #2 review procedure for application implementation work.
@@ -37,7 +70,7 @@ Resolve `indep-review` to this canonical skill, retrieve/read the governing Issu
 
 # Durable review-state comments
 
-Agent #2 records each independent review/disposition back to the same Issue or PR using:
+Agent #2 records each independent review/disposition back to the same Issue or PR using its own marker only:
 
 ```text
 [AGENT #2 — INDEPENDENT REVIEW]
@@ -86,7 +119,7 @@ Follow-up / Out of scope:
 Verdict: APPROVED | CHANGES REQUIRED | APPROVED — MERGE
 ```
 
-Keep the comment concise. Do not reproduce the entire prompt or skill.
+Keep the comment concise. Do not reproduce the entire prompt or skill. Agent #2 must never create an Agent #1 implementation/correction workflow-state comment.
 
 ---
 
@@ -160,9 +193,11 @@ It becomes blocking only when:
 
 This is an **Agent #2 skill**.
 
+Agent #1 and Agent #2 are distinct agents. They are not personas, modes, or phases one agent may assume.
+
 Agent #2 must be invoked separately after Agent #1 stops and returns control to the builder, coordinator, or calling environment.
 
-Agent #1 must not satisfy the independent-review gate by spawning, simulating, impersonating, or internally controlling its own reviewer.
+Agent #2's identity remains fixed for the full invocation. Agent #2 must not cross into implementation/correction work. If review determines correction is required, Agent #2 posts the disposition and stops for a separate Agent #1 invocation.
 
 The requirement is procedural independence, not model diversity.
 
@@ -365,6 +400,8 @@ APPROVED — MERGE
 
 Suggestions discovered during re-review do not prevent approval.
 
+If the verdict is `CHANGES REQUIRED`, Agent #2 posts the structured review disposition and stops. Correction belongs to a separately invoked Agent #1.
+
 ---
 
 # Architecture and ambiguity protections
@@ -440,6 +477,8 @@ To preserve independent review quality:
 - Agent #2 is separately invoked;
 - Agent #2 inspects the actual artifact;
 - Agent #2 does not modify implementation while reviewing;
+- Agent #2 does not assume Agent #1 implementation/correction responsibilities when changes are required;
+- Agent #2 never creates Agent #1 workflow-state markers;
 - Agent #1's summary is context, not proof;
 - substantive changes after approval invalidate that approval for the changed artifact;
 - findings are independently evaluated rather than accepted merely because another reviewer emitted them;
@@ -470,6 +509,10 @@ The goal is to determine whether the current change met its contract without int
 
 A review follows this skill only when:
 
+- the skill immediately establishes the executing agent as Agent #2 for the full invocation;
+- Agent #2 never changes identity or assumes Agent #1 responsibilities during the invocation;
+- a `CHANGES REQUIRED` verdict is a hard stop and separate-invocation handoff to Agent #1;
+- Agent #2 never creates Agent #1 implementation/correction workflow-state comments;
 - Agent #2 is independently invoked;
 - Agent #2 reads the governing Issue/PR and latest relevant Agent #1 workflow-state comment for the current phase;
 - prior workflow-state comments are treated as durable history, not as authority over the current artifact;
