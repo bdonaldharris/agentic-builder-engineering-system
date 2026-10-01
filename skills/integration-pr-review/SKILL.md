@@ -94,6 +94,10 @@ For the current phase:
 
 The current PR head/artifact is authoritative. Workflow-state comments record what agents did, found, and decided; they do not override source state.
 
+For production-bound review, the `[AGENT #2 — INDEPENDENT REVIEW]` disposition must be written to the PR itself. An Agent #2 response that exists only in the agent conversation does not satisfy the durable PR-state requirement.
+
+The Agent #2 review invocation is not complete until the PR comment has been successfully written and verified. If that durable write fails, Agent #2 must report the failure rather than claim that the PR review state was recorded.
+
 The latest relevant structured comment should provide enough context for the next agent invocation to continue without a manually constructed history prompt.
 
 ---
@@ -359,7 +363,7 @@ Report all presently identifiable validated current-PR blockers together before 
 
 If Agent #2 determines that a finding is outside the current issue boundary, do not expand the current implementation scope. Record that determination in the `[AGENT #2 — INDEPENDENT REVIEW]` PR comment and return the warranted follow-up/discovery/backlog candidate to the workflow orchestrator for separate handling.
 
-After dispositioning the complete automated-review result, Agent #2 posts the structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the PR, including the three governing answers, validated blockers, Codex dispositions, follow-up/out-of-scope determinations, and verdict.
+After dispositioning the complete automated-review result, Agent #2 writes the structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the PR, including the three governing answers, validated blockers, Codex dispositions, follow-up/out-of-scope determinations, validation, and verdict. Agent #2 must verify that the PR comment was successfully recorded before terminating. Returning the review text only in the agent response does not satisfy this phase.
 
 Do not relitigate a previously adjudicated suggestion unless new evidence shows the current PR actually caused or materially worsened the problem.
 
@@ -671,7 +675,9 @@ An integration PR follows this skill only when:
 - Agent #1 never creates `[AGENT #2 — INDEPENDENT REVIEW]`;
 - PR comments using the structured Agent #1/Agent #2 markers are the durable workflow-history record while the current PR artifact remains authoritative for source state;
 - the latest relevant workflow-state comment is selected by marker/current phase rather than by assuming the newest PR comment is relevant;
-- Agent #1 implementation/correction state and Agent #2 review/disposition state are posted back to the PR;
+- Agent #1 implementation/correction state and Agent #2 review/disposition state are written back to the PR;
+- each Agent #2 PR review/disposition is complete only after the `[AGENT #2 — INDEPENDENT REVIEW]` comment has been successfully recorded and verified on the PR itself;
+- an Agent #2 response that exists only outside the PR does not satisfy the durable production-bound review state;
 - review is governed by the three questions;
 - one normal automated review runs on the stable implementation head using the complete Canonical Codex Integration Review Request;
 - a bare `@codex review` by itself does not satisfy the workflow;
