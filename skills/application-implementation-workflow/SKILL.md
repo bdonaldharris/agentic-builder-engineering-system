@@ -13,17 +13,25 @@ It keeps implementation scoped to the governing issue while preserving independe
 
 ## Invocation model
 
-The governing issue is the authoritative source of change-specific requirements, acceptance criteria, scope, constraints, and implementation context.
+The governing Issue/PR is the authoritative source of change-specific requirements, acceptance criteria, scope, constraints, and durable workflow history/state. The current repository/artifact remains authoritative for what actually exists.
 
-This skill owns the reusable implementation procedure. The invocation prompt does not need to restate issue content or workflow rules already defined here.
+This skill owns the reusable implementation procedure. The invocation prompt does not need to restate issue content, prior execution history, or workflow rules already recorded in GitHub and defined here.
 
-When the agent is already operating in the correct repository workspace, a minimal invocation is sufficient, for example:
+When the agent is already operating in the correct repository workspace, a one-line invocation is sufficient, for example:
 
 ```text
-implement #1482 using implement-workflow
+Implement FE #1510 using application-implementation-workflow
 ```
 
-Resolve `implement-workflow` to this canonical skill, then retrieve/read the governing issue and execute this workflow. Do not require the prompt to duplicate the issue specification, branch rules, review rules, or recurring `DO NOT` instructions owned by this skill.
+For a correction:
+
+```text
+Correct FE #1510 using application-implementation-workflow
+```
+
+Resolve the requested skill, retrieve/read the governing Issue or PR, identify the latest relevant workflow-state comment for the current phase, inspect the current artifact, and execute this workflow. Do not require the prompt to duplicate the issue specification, prior Agent #1/Agent #2 state, branch rules, review rules, or recurring `DO NOT` instructions owned by this skill.
+
+Do not rely on the surrounding ChatGPT conversation as the durable workflow record.
 
 The governing review contract is:
 
@@ -40,6 +48,82 @@ For an integration PR:
 ```text
 Yes -> No -> Yes = MERGE
 ```
+
+---
+
+# Durable workflow-state comments
+
+GitHub Issues and PRs are the durable record of implementation/review execution state.
+
+Use recognizable workflow-state markers so agents can identify the latest relevant execution state without assuming the absolute newest comment is relevant. Human comments, Codex comments, inline review comments, and other activity may appear after a workflow-state comment.
+
+Agent #1 uses:
+
+```text
+[AGENT #1 — IMPLEMENTATION]
+```
+
+for the initial implementation result, and:
+
+```text
+[AGENT #1 — CORRECTION]
+```
+
+for correction results.
+
+Before acting, Agent #1 must:
+
+1. inspect the current Issue or PR;
+2. identify the latest relevant workflow-state comment for the current phase;
+3. for a correction, identify the latest applicable `[AGENT #2 — INDEPENDENT REVIEW]` disposition;
+4. use that history as execution context together with the current artifact and governing issue/PR;
+5. perform the implementation/correction defined by this skill;
+6. post the result back to the same Issue or PR as a new structured workflow-state comment.
+
+Workflow-state comments are historical/execution records, not substitutes for inspecting the current artifact. If a comment and the current repository state disagree, the current artifact is authoritative.
+
+Agent #1 comments must be concise but sufficient for the next invocation to continue without reconstructing context from ChatGPT history.
+
+For initial implementation, use:
+
+```markdown
+[AGENT #1 — IMPLEMENTATION]
+
+Status: READY FOR AGENT #2 REVIEW | MATERIAL BLOCKER
+Artifact/Branch: <current artifact or branch reference>
+Implemented:
+- <concise issue-scoped summary>
+Validation:
+- <checks run and result>
+Environment / Deployment Requirements:
+- <requirements>
+—or—
+Environment / Deployment Requirements: None
+Notes:
+- <material blocker or concise relevant state, if any>
+```
+
+For correction, use:
+
+```markdown
+[AGENT #1 — CORRECTION]
+
+Status: READY FOR AGENT #2 RE-REVIEW | MATERIAL BLOCKER
+Disposition Addressed: <latest applicable Agent #2 review comment/reference>
+Artifact/Branch: <current artifact or branch reference>
+Corrected:
+- <coherent issue-scoped correction summary>
+Validation:
+- <checks run and result>
+Environment / Deployment Requirements:
+- <updated requirements>
+—or—
+Environment / Deployment Requirements: None
+Notes:
+- <material blocker or concise relevant state, if any>
+```
+
+Do not reproduce the entire prompt or skill in these comments.
 
 ---
 
@@ -183,17 +267,18 @@ The requirement is a real workflow handoff, not merely a different persona.
 
 Agent #1:
 
-1. reads the governing issue and acceptance criteria;
-2. inspects current repository state and relevant existing architecture;
-3. resolves material ambiguity before consequential implementation;
-4. creates/uses the issue-specific branch from the designated integration branch;
-5. implements only the issue scope;
-6. reuses established owning abstractions where appropriate;
-7. adds/updates tests and contracts needed for the changed behavior;
-8. runs focused validation;
-9. inspects the full working-tree diff;
-10. identifies and maintains the authoritative Environment / Deployment Requirements for the current artifact;
-11. reports implementation, repository state, and Environment / Deployment Requirements.
+1. reads the governing Issue/PR, acceptance criteria, and relevant prior workflow-state comments;
+2. identifies the latest applicable workflow-state comment for the current phase without assuming the newest GitHub comment is relevant;
+3. inspects current repository state and relevant existing architecture;
+4. resolves material ambiguity before consequential implementation;
+5. creates/uses the issue-specific branch from the designated integration branch;
+6. implements only the issue scope;
+7. reuses established owning abstractions where appropriate;
+8. adds/updates tests and contracts needed for the changed behavior;
+9. runs focused validation;
+10. inspects the full working-tree diff;
+11. identifies and maintains the authoritative Environment / Deployment Requirements for the current artifact;
+12. posts the structured `[AGENT #1 — IMPLEMENTATION]` workflow-state comment to the governing Issue or PR with implementation, validation, environment/deployment requirements, and terminal status.
 
 ## Supabase table creation
 
@@ -247,7 +332,7 @@ Agent #1 must **not** commit, push, open a PR, or self-satisfy Agent #2 review.
 
 This hold point is reached only after the universal pre-return completion gate produces `READY FOR AGENT #2 REVIEW`.
 
-Agent #1 then returns control for separate Agent #2 review with a concise implementation summary and the artifact still uncommitted and unpushed.
+Agent #1 posts the structured `[AGENT #1 — IMPLEMENTATION]` comment, then returns control for separate Agent #2 review with the artifact still uncommitted and unpushed. That GitHub comment is the durable implementation handoff.
 
 ---
 # Phase 2 — Agent #2 review
@@ -281,15 +366,17 @@ Suggestions do not change the approval decision.
 If Agent #2 identifies a genuine current-implementation blocker:
 
 1. control returns to Agent #1;
-2. Agent #1 corrects the demonstrated cause at its coherent issue-scoped behavior boundary, not merely the single reported permutation;
-3. when the validated defect shows that the same issue-scoped state, transition, authority rule, recovery rule, or other behavior model governs directly related cases, Agent #1 corrects the directly affected sibling states/transitions necessary for the original issue-scoped behavior to work;
-4. Agent #1 completes all correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related changes required for the corrected artifact to work;
-5. Agent #1 resolves build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact;
-6. unrelated pre-existing failures are evidenced and reported separately without expanding correction scope;
-7. Agent #1 runs relevant validation;
-8. Agent #1 applies the universal pre-return completion gate;
-9. only `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER` may return control;
-10. after `READY FOR AGENT #2 RE-REVIEW`, separate Agent #2 re-review answers the same three questions again.
+2. Agent #1 reads the governing Issue/PR and latest applicable `[AGENT #2 — INDEPENDENT REVIEW]` disposition, while also inspecting the complete current artifact;
+3. Agent #1 corrects the demonstrated cause at its coherent issue-scoped behavior boundary, not merely the single reported permutation;
+4. when the validated defect shows that the same issue-scoped state, transition, authority rule, recovery rule, or other behavior model governs directly related cases, Agent #1 corrects the directly affected sibling states/transitions necessary for the original issue-scoped behavior to work;
+5. Agent #1 completes all correction-scoped wiring, contracts, migrations, adapters, services, tests, configuration, and related changes required for the corrected artifact to work;
+6. Agent #1 resolves build/test failures that are correction-scoped, issue-scoped, or introduced by the current artifact;
+7. unrelated pre-existing failures are evidenced and reported separately without expanding correction scope;
+8. Agent #1 runs relevant validation;
+9. Agent #1 applies the universal pre-return completion gate;
+10. Agent #1 posts a new `[AGENT #1 — CORRECTION]` workflow-state comment to the same Issue/PR;
+11. only `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER` may return control;
+12. after `READY FOR AGENT #2 RE-REVIEW`, separate Agent #2 re-review answers the same three questions again.
 
 ## Coherent correction boundary
 
@@ -359,7 +446,8 @@ After Agent #2 returns `APPROVED`, Agent #1 may:
 2. stage only reviewed files;
 3. commit;
 4. push the issue branch;
-5. open the integration PR.
+5. open the integration PR;
+6. post the current `[AGENT #1 — IMPLEMENTATION]` workflow-state comment on the PR so production-bound review state is durable on the PR itself.
 
 The PR should accurately describe:
 
@@ -484,7 +572,7 @@ It does not mean the application must have zero known suggestions or historical 
 
 Prompts generated from this workflow should stay small.
 
-The prompt supplies the task; the skill supplies the procedure.
+The Issue/PR supplies the what and durable workflow history/state; the skill supplies the how; the prompt supplies only the action/location.
 
 Do not restate the whole workflow in each prompt.
 
@@ -592,6 +680,9 @@ universal pre-return completion gate
 
 An implementation follows this skill only when:
 
+- Agent #1 reads the governing Issue/PR and latest relevant workflow-state comments before acting;
+- Agent #1 records implementation/correction execution state back to the same Issue/PR using the structured workflow-state markers;
+- GitHub workflow-state comments provide durable history but never replace inspection of the current artifact;
 - Agent #1 inspects existing architecture before creating new architecture;
 - material ambiguity is clarified rather than guessed through;
 - implementation remains inside issue scope;
