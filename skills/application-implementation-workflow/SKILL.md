@@ -664,61 +664,56 @@ In particular:
 ```text
 Issue
   ↓
-Agent #1 inspect architecture + clarify material ambiguity
+Agent #1 implementation invocation
   ↓
-implement / validate issue scope
+inspect architecture + implement / validate issue scope
   ↓
 universal pre-return completion gate
-  ├── MATERIAL BLOCKER → return exact blocker → resume interrupted cycle after resolution
+  ├── MATERIAL BLOCKER → return exact blocker
   └── READY FOR AGENT #2 REVIEW
              ↓
-        separate Agent #2 complete-artifact review
+            STOP
              ↓
-        blocker exposes shared behavior rule?
-             ├── Yes → bounded sibling-state/transition sweep
-             └── No
+        separate Agent #2 complete-artifact review invocation
              ↓
         report all presently demonstrable issue-scoped blockers together
              ↓
         Yes -> No -> Yes?
-        ├── No → Agent #1 coherent correction boundary
-        │          ↓
-        │       universal pre-return completion gate
-        │          ├── MATERIAL BLOCKER
-        │          └── READY FOR AGENT #2 RE-REVIEW
-        │                     ↓
-        │                separate Agent #2 complete-artifact re-review
-        │                     ↓
-        │                directly related sibling failure after correction?
-        │                     ├── Yes → bounded churn analysis → one coherent correction boundary
-        │                     └── No
-        └── Yes
-               ↓
-            commit / push / integration PR
-               ↓
-            one normal automated PR review
-               ↓
-            independently disposition findings
-               ↓
-            validated current-PR blocker?
-              ├── No → merge after required CI/human approval
-              └── Yes → Agent #1 coherent correction
-                         ↓
-                      Agent #2 complete-artifact re-review
-                         ↓
-                      Yes -> No -> Yes = APPROVED — MERGE
-                         ↓
-                      commit / push exactly approved correction
-                         ↓
-                      one bounded final-head automated review
-                         ↓
-                      independently disposition findings
-                         ↓
-                      another validated blocker causing another correction?
-                         ├── Yes → repeat correction / re-review / final-head sequence
-                         └── No → CI / human approval → MERGE
-               ↓
-            intentionally boring promotion
+        ├── No → CHANGES REQUIRED → STOP
+        │                         ↓
+        │              separate Agent #1 correction invocation
+        │                         ↓
+        │              coherent correction boundary
+        │                         ↓
+        │              READY FOR AGENT #2 RE-REVIEW
+        │                         ↓
+        │                        STOP
+        │                         ↓
+        │              separate Agent #2 re-review invocation
+        └── Yes → APPROVED → STOP
+                               ↓
+                    separate Agent #1 PR-finalization invocation
+                               ↓
+                    commit / push / integration PR
+                               ↓
+                    post canonical Codex review request
+                               ↓
+                              STOP
+                               ↓
+                    separate Agent #2 Codex-disposition review
+                               ↓
+                    validated current-PR blocker?
+                      ├── Yes → CHANGES REQUIRED → STOP → separate Agent #1 correction invocation
+                      └── No → later Agent #1 merge/finalization invocation when all gates are satisfied
+
+After any artifact-changing approved correction:
+Agent #1 push + post bounded final-head Codex request → STOP
+  ↓
+separate Agent #2 final-head disposition
+  ↓
+merge only after exact-head approval + required gates
+  ↓
+intentionally boring promotion
 ```
 
 ---
