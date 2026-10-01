@@ -50,7 +50,7 @@ A skill invocation establishes the executing agent's identity for that execution
 
 A transition between Agent #1 and Agent #2 requires a separate agent invocation.
 
-Reaching another agent's responsibility is a **handoff boundary**, not permission for the current agent to assume that role.
+Reaching another agent's responsibility is a **terminal handoff boundary**, not permission for the current agent to assume that role. The current invocation ends at that boundary; it must not wait, poll, monitor, sleep/retry, or autonomously continue when the future state appears.
 
 The role-specific workflow-state markers are owned by their corresponding agent:
 
@@ -81,7 +81,9 @@ separate Agent #1 invocation
 → STOP
 ```
 
-Codex is a review input, not Agent #2. A Codex review does not constitute independent Agent #2 review, Codex severity does not control disposition, and Codex returning no findings does not authorize Agent #1 to declare approval. Only a separately invoked Agent #2 using `independent-implementation-review` may produce the Agent #2 independent-review disposition.
+Codex is a review input, not Agent #2. A Codex review does not constitute independent Agent #2 review, Codex severity does not control disposition, and Codex returning no findings does not authorize Agent #1 to declare approval. Posting the canonical Codex review request is itself a terminal Agent #1 handoff: Agent #1 stops immediately and does not wait or poll for the result. Only a separately invoked Agent #2 using `independent-implementation-review` may produce the Agent #2 independent-review disposition.
+
+When Codex findings exist, Agent #2's durable review comment explicitly accounts for every material finding with a concise identification, independent disposition, and reason tied to the three-question contract. `Not applicable` is used only when no applicable Codex findings exist.
 
 ## Skill shorthand
 
@@ -102,8 +104,8 @@ Canonical reusable engineering procedures live under `skills/`.
 - [`application-implementation-workflow`](skills/application-implementation-workflow/SKILL.md) (`implement-workflow`) — Executes as **Agent #1 — Implementation Agent** and governs scoped implementation/correction, durable Issue/PR workflow-state comments, environment/deployment requirement handoff, coherent issue-bound corrections, review handoff boundaries, bounded automated PR review, final-head artifact-integrity review, and intentionally boring promotion.
 - [`engineering-discovery-workflow`](skills/engineering-discovery-workflow/SKILL.md) (`eng-discovery`) — Governs evidence-based investigation of existing software systems before implementation, including capability classification, cross-layer tracing, gap analysis, and issue-ready discovery reporting without changing the system.
 - [`implementation-readiness-workflow`](skills/implementation-readiness-workflow/SKILL.md) (`readiness-workflow`) — Determines whether a defined change is sufficiently understood to implement responsibly by resolving material architectural, contract, data, authorization, integration, validation, and scope questions before coding begins.
-- [`independent-implementation-review`](skills/independent-implementation-review/SKILL.md) (`indep-review`) — Executes as **Agent #2 — Independent Review Agent** and defines the narrow three-question review contract, complete-artifact review, structured Issue/PR disposition comments, bounded sibling-state review, and independent Codex-finding disposition. Agent #2 never performs implementation/correction work and stops with a handoff when changes are required.
-- [`integration-pr-review`](skills/integration-pr-review/SKILL.md) (`pr-review`) — Executes as **Agent #1 — Implementation Agent** for PR-side integration/finalization responsibilities. It governs durable PR workflow-state comments, the canonical detailed Codex Integration Review Request, hard Agent #2 disposition handoffs, coherent correction/re-review flow, bounded final-head review, Environment / Deployment Requirements gating, and non-recursive merge convergence.
+- [`independent-implementation-review`](skills/independent-implementation-review/SKILL.md) (`indep-review`) — Executes as **Agent #2 — Independent Review Agent** and defines the narrow three-question review contract, complete-artifact review, structured Issue/PR disposition comments, bounded sibling-state review, and auditable independent disposition of every material Codex finding. Agent #2 never performs implementation/correction work and stops with a handoff when changes are required.
+- [`integration-pr-review`](skills/integration-pr-review/SKILL.md) (`pr-review`) — Executes as **Agent #1 — Implementation Agent** for PR-side integration/finalization responsibilities. It governs durable PR workflow-state comments, terminal Codex handoffs with no waiting/polling, the canonical detailed Codex Integration Review Request, hard Agent #2 disposition boundaries, exact-head merge authorization, bounded final-head review, Environment / Deployment Requirements gating, and non-recursive merge convergence.
 
 ### Review contract
 
