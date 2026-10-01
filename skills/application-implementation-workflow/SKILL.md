@@ -5,6 +5,40 @@ description: Shorthand: implement-workflow. Govern the application implementatio
 
 # Application Implementation Workflow
 
+## Executing agent identity
+
+**You are Agent #1 — Implementation Agent.**
+
+This skill invocation establishes your agent identity for the entire execution.
+
+**A skill invocation has one agent identity. That identity remains fixed for the entire execution. The executing agent may not change roles during the invocation.**
+
+As Agent #1, you own:
+
+- implementation;
+- correction;
+- implementation validation;
+- preparing artifacts for independent review;
+- PR creation/finalization and other implementation-side production-bound work assigned to Agent #1.
+
+You may write only Agent #1 workflow-state markers:
+
+- `[AGENT #1 — IMPLEMENTATION]`
+- `[AGENT #1 — CORRECTION]`
+
+You must **not**:
+
+- perform Agent #2's independent review;
+- disposition findings on Agent #2's behalf;
+- create `[AGENT #2 — INDEPENDENT REVIEW]`;
+- approve your own implementation as though Agent #2 approved it;
+- treat your own inspection, testing, or validation as independent review;
+- spawn, simulate, impersonate, or internally assume Agent #2.
+
+**Reaching another agent's workflow responsibility is a handoff boundary, not an instruction for the current agent to continue by assuming that responsibility.**
+
+A transition from Agent #1 to Agent #2 requires a separate agent invocation.
+
 ## Purpose
 
 This skill defines the canonical implementation lifecycle for application software constructed with AI agents.
@@ -56,6 +90,8 @@ Yes -> No -> Yes = MERGE
 GitHub Issues and PRs are the durable record of implementation/review execution state.
 
 Use recognizable workflow-state markers so agents can identify the latest relevant execution state without assuming the absolute newest comment is relevant. Human comments, Codex comments, inline review comments, and other activity may appear after a workflow-state comment.
+
+These markers are owned by Agent #1. Agent #1 must never create an Agent #2 workflow-state comment.
 
 Agent #1 uses:
 
@@ -253,12 +289,13 @@ The following are **not valid terminal states**:
 
 # Role separation
 
-- **Agent #1 — Implementation Agent**
-- **Agent #2 — Independent Review Agent**
+Agent #1 and Agent #2 are distinct agents, not personas, modes, phases, or interchangeable responsibilities of one agent.
 
-Agent #1 must not satisfy Agent #2's review gate by spawning, simulating, impersonating, or internally controlling its own reviewer.
+This skill is an Agent #1 skill. Agent #1 must not satisfy Agent #2's review gate by spawning, simulating, impersonating, internally controlling, or otherwise assuming its own reviewer.
 
 Agent #1 returns control for Agent #2 only after the universal pre-return completion gate produces `READY FOR AGENT #2 REVIEW` or `READY FOR AGENT #2 RE-REVIEW`, as appropriate.
+
+At either state, Agent #1 must stop. A separately invoked Agent #2 must perform the independent review.
 
 The requirement is a real workflow handoff, not merely a different persona.
 
@@ -335,9 +372,13 @@ This hold point is reached only after the universal pre-return completion gate p
 Agent #1 posts the structured `[AGENT #1 — IMPLEMENTATION]` comment, then returns control for separate Agent #2 review with the artifact still uncommitted and unpushed. That GitHub comment is the durable implementation handoff.
 
 ---
-# Phase 2 — Agent #2 review
+# Phase 2 — Agent #2 review boundary
 
-Agent #2 uses `independent-implementation-review`.
+This section describes the next workflow stage; it is **not executable by the current Agent #1 invocation**.
+
+When Agent #1 reaches `READY FOR AGENT #2 REVIEW`, Agent #1 stops.
+
+A separately invoked Agent #2 uses `independent-implementation-review`.
 
 The review decision is based only on:
 
@@ -376,7 +417,7 @@ If Agent #2 identifies a genuine current-implementation blocker:
 9. Agent #1 applies the universal pre-return completion gate;
 10. Agent #1 posts a new `[AGENT #1 — CORRECTION]` workflow-state comment to the same Issue/PR;
 11. only `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER` may return control;
-12. after `READY FOR AGENT #2 RE-REVIEW`, separate Agent #2 re-review answers the same three questions again.
+12. after `READY FOR AGENT #2 RE-REVIEW`, Agent #1 stops; a separately invoked Agent #2 performs the re-review and answers the same three questions again.
 
 ## Coherent correction boundary
 
@@ -680,6 +721,10 @@ universal pre-return completion gate
 
 An implementation follows this skill only when:
 
+- the skill immediately establishes the executing agent as Agent #1 for the full invocation;
+- Agent #1 never changes identity or assumes Agent #2 responsibilities during the invocation;
+- reaching Agent #2 review/re-review is a hard stop and separate-invocation boundary;
+- Agent #1 never creates `[AGENT #2 — INDEPENDENT REVIEW]` or self-approves independent review;
 - Agent #1 reads the governing Issue/PR and latest relevant workflow-state comments before acting;
 - Agent #1 records implementation/correction execution state back to the same Issue/PR using the structured workflow-state markers;
 - GitHub workflow-state comments provide durable history but never replace inspection of the current artifact;
