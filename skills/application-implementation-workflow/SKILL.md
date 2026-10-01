@@ -295,7 +295,9 @@ This skill is an Agent #1 skill. Agent #1 must not satisfy Agent #2's review gat
 
 Agent #1 returns control for Agent #2 only after the universal pre-return completion gate produces `READY FOR AGENT #2 REVIEW` or `READY FOR AGENT #2 RE-REVIEW`, as appropriate.
 
-At either state, Agent #1 must stop. A separately invoked Agent #2 must perform the independent review.
+At either state, Agent #1 must stop. Agent #1 must not wait for Agent #2, poll for review state, monitor for a future disposition, create/simulate Agent #2 review, or continue merely because review is the expected next step.
+
+A separately invoked Agent #2 must perform the independent review. Agent #1 resumes only through a later separate invocation after an applicable durable `[AGENT #2 — INDEPENDENT REVIEW]` disposition exists.
 
 The requirement is a real workflow handoff, not merely a different persona.
 
@@ -376,7 +378,9 @@ Agent #1 posts the structured `[AGENT #1 — IMPLEMENTATION]` comment, then retu
 
 This section describes the next workflow stage; it is **not executable by the current Agent #1 invocation**.
 
-When Agent #1 reaches `READY FOR AGENT #2 REVIEW`, Agent #1 stops.
+When Agent #1 reaches `READY FOR AGENT #2 REVIEW`, Agent #1 stops immediately. The current invocation ends at that boundary.
+
+Agent #1 must not wait, poll, sleep/retry, monitor for Agent #2, or autonomously continue when a future review result becomes available.
 
 A separately invoked Agent #2 uses `independent-implementation-review`.
 
@@ -404,9 +408,9 @@ Suggestions do not change the approval decision.
 
 # Phase 3 — Correction loop
 
-If Agent #2 identifies a genuine current-implementation blocker:
+If Agent #2 identifies a genuine current-implementation blocker, correction begins only through a new explicit Agent #1 invocation after the durable Agent #2 disposition exists.
 
-1. control returns to Agent #1;
+1. control returns to a separately invoked Agent #1;
 2. Agent #1 reads the governing Issue/PR and latest applicable `[AGENT #2 — INDEPENDENT REVIEW]` disposition, while also inspecting the complete current artifact;
 3. Agent #1 corrects the demonstrated cause at its coherent issue-scoped behavior boundary, not merely the single reported permutation;
 4. when the validated defect shows that the same issue-scoped state, transition, authority rule, recovery rule, or other behavior model governs directly related cases, Agent #1 corrects the directly affected sibling states/transitions necessary for the original issue-scoped behavior to work;
@@ -417,7 +421,7 @@ If Agent #2 identifies a genuine current-implementation blocker:
 9. Agent #1 applies the universal pre-return completion gate;
 10. Agent #1 posts a new `[AGENT #1 — CORRECTION]` workflow-state comment to the same Issue/PR;
 11. only `READY FOR AGENT #2 RE-REVIEW` or `MATERIAL BLOCKER` may return control;
-12. after `READY FOR AGENT #2 RE-REVIEW`, Agent #1 stops; a separately invoked Agent #2 performs the re-review and answers the same three questions again.
+12. after `READY FOR AGENT #2 RE-REVIEW`, Agent #1 stops immediately; the current invocation ends, and a separately invoked Agent #2 performs the re-review and answers the same three questions again. Agent #1 must not wait or poll for that re-review.
 
 ## Coherent correction boundary
 
@@ -481,6 +485,8 @@ Non-blocking observations belong in the repository's consolidated `Application I
 
 # Phase 4 — Commit, push, and integration PR
 
+This phase begins only through a new/separate Agent #1 invocation after the durable Agent #2 disposition is `APPROVED` for the exact current artifact.
+
 After Agent #2 returns `APPROVED`, Agent #1 may:
 
 1. verify the reviewed working-tree state has not changed;
@@ -508,16 +514,16 @@ Use `integration-pr-review`.
 
 The intended production-bound PR flow is:
 
-1. run one normal automated/Codex review on the stable initial implementation head;
-2. independently evaluate each automated finding against the same three questions;
-3. route findings that do not fail one of those questions to `Application Improvement Suggestions`;
-4. correct only validated current-PR blockers; every Agent #1 correction remains governed by the global Agent #1 execution invariant, coherent correction boundary, churn trigger when applicable, and universal pre-return completion gate;
-5. use separate Agent #2 narrow correction re-review only after Agent #1 reaches `READY FOR AGENT #2 RE-REVIEW`;
-6. if Agent #2 returns `APPROVED — MERGE`, Agent #1 finalizes the approved correction as one continuous action: verify the approved artifact, commit, push exactly that approved correction, confirm the stable PR head, post the complete canonical Codex Integration Review Request defined by `integration-pr-review`, then stop;
-7. verify the pushed artifact matches what Agent #2 reviewed;
-8. because the production-bound PR head changed, run one bounded final-head automated/Codex review on that new stable head;
-9. independently disposition every final-head finding against the same three governing questions;
-10. if no validated blocker remains, satisfy required CI/human approval and merge.
+1. Agent #1 posts the complete canonical Codex Integration Review Request on the stable PR head;
+2. posting that Codex request is a terminal handoff for the current Agent #1 invocation — Agent #1 stops immediately and does not wait/poll for Codex;
+3. after Codex returns, a separately invoked Agent #2 independently reviews the complete current artifact and dispositions every material Codex finding against the three governing questions;
+4. findings that do not require current correction are recorded as non-blocking/informational, invalid, or follow-up/out-of-scope as applicable;
+5. correction begins only through a new Agent #1 invocation when Agent #2 returns `CHANGES REQUIRED`;
+6. every Agent #1 correction remains governed by the global Agent #1 execution invariant, coherent correction boundary, churn trigger when applicable, and universal pre-return completion gate;
+7. after `READY FOR AGENT #2 RE-REVIEW`, Agent #1 stops; a separate Agent #2 invocation performs complete-artifact re-review;
+8. if Agent #2 returns `APPROVED — MERGE`, a new Agent #1 finalization invocation may verify the approved artifact, commit/push exactly the approved correction, confirm the stable PR head, and post the complete canonical final-head Codex review request;
+9. posting the final-head Codex request is again a terminal handoff — Agent #1 stops immediately;
+10. a separately invoked Agent #2 dispositions the final-head Codex result; only after an Agent #2 approval for the exact current PR head and all remaining gates are satisfied may a later Agent #1 invocation merge.
 
 The final-head automated review is an **artifact-integrity gate**. Automated review remains evidence, not authority.
 
@@ -724,6 +730,7 @@ An implementation follows this skill only when:
 - the skill immediately establishes the executing agent as Agent #1 for the full invocation;
 - Agent #1 never changes identity or assumes Agent #2 responsibilities during the invocation;
 - reaching Agent #2 review/re-review is a hard stop and separate-invocation boundary;
+- Agent #1 does not wait, poll, sleep/retry, monitor, or autonomously continue across a handoff boundary merely because the next workflow state may appear later;
 - Agent #1 never creates `[AGENT #2 — INDEPENDENT REVIEW]` or self-approves independent review;
 - Agent #1 reads the governing Issue/PR and latest relevant workflow-state comments before acting;
 - Agent #1 records implementation/correction execution state back to the same Issue/PR using the structured workflow-state markers;
