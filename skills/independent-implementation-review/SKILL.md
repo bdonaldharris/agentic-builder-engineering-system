@@ -468,15 +468,25 @@ Evidence:
 —or—
 - <blocker tied to one of the three governing questions>
 
-## Suggestions
+## Codex findings and Agent #2 dispositions
+- Not applicable — no applicable Codex findings were present
+—or—
+- <concise finding identification>
+  - Disposition: Requires correction | Non-blocking / informational | Not valid | Outside current issue boundary / follow-up
+  - Reason: <concise reason tied to one or more governing questions>
+
+## Suggestions / Follow-up
 - None.
 —or—
-- <lightweight non-blocking observation for Application Improvement Suggestions>
+- <lightweight non-blocking or out-of-scope observation>
+
+## Validation
+- <concise validation evidence reviewed/run and result>
 
 ## Verdict
 APPROVED | CHANGES REQUIRED
 
-For integration-PR correction re-review:
+For integration-PR correction/final-head re-review:
 APPROVED — MERGE | CHANGES REQUIRED
 ```
 
