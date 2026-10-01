@@ -15,17 +15,78 @@ The governing review contract is intentionally narrow.
 
 ## Invocation model
 
-The governing issue is the authoritative source of change-specific requirements, acceptance criteria, scope, and intended behavior.
+The governing Issue/PR is the authoritative source of change-specific requirements, acceptance criteria, scope, intended behavior, and durable workflow history/state. The current repository/artifact remains authoritative for what actually exists.
 
-This skill owns the reusable Agent #2 review procedure. The invocation prompt does not need to restate the issue specification or the review rules defined here.
+This skill owns the reusable Agent #2 review procedure. The invocation prompt does not need to restate the issue specification, prior workflow state, or review rules defined here.
 
-When Agent #2 is already operating in the correct repository workspace with access to the implementation artifact, a minimal invocation is sufficient, for example:
+When Agent #2 is already operating in the correct repository workspace with access to the implementation artifact, a one-line invocation is sufficient, for example:
 
 ```text
-review #1482 using indep-review
+Review FE #1510 using indep-review
 ```
 
-Resolve `indep-review` to this canonical skill, retrieve/read the governing issue, inspect the current workspace artifact, and perform the independent review. Do not depend on prompt duplication or Agent #1's summary to reconstruct the issue contract.
+For a correction re-review:
+
+```text
+Re-review FE #1510 using indep-review
+```
+
+Resolve `indep-review` to this canonical skill, retrieve/read the governing Issue or PR, identify the latest relevant Agent #1 workflow-state comment for the current phase, inspect the complete current artifact, and perform the independent review. Do not depend on prompt duplication, ChatGPT conversation history, or Agent #1's summary alone to reconstruct the issue contract or artifact state.
+
+---
+
+# Durable review-state comments
+
+Agent #2 records each independent review/disposition back to the same Issue or PR using:
+
+```text
+[AGENT #2 — INDEPENDENT REVIEW]
+```
+
+Do not assume the absolute newest GitHub comment is the relevant workflow state. Human comments, Codex findings, inline review comments, and other activity may appear after the latest Agent #1 or Agent #2 workflow-state comment.
+
+Before reviewing, Agent #2 must:
+
+1. inspect the governing Issue or PR;
+2. identify the latest relevant `[AGENT #1 — IMPLEMENTATION]` or `[AGENT #1 — CORRECTION]` comment for the current phase;
+3. use applicable prior Agent #2 comments as workflow history only;
+4. inspect the complete current artifact independently;
+5. perform this review;
+6. post a new structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the same Issue or PR.
+
+A prior review comment is never a substitute for reviewing the complete current artifact. If workflow-state comments conflict with the current repository state, the current artifact is authoritative.
+
+Use a concise comment such as:
+
+```markdown
+[AGENT #2 — INDEPENDENT REVIEW]
+
+Phase: INITIAL REVIEW | CORRECTION RE-REVIEW | CODEX DISPOSITION | FINAL-HEAD CODEX DISPOSITION
+Artifact/Head: <current artifact/head reference>
+
+Acceptance criteria met? Yes | No
+New bug/regression introduced? Yes | No
+Does it work? Yes | No
+
+Current blockers:
+- None
+—or—
+- <validated blocker>
+
+Codex disposition:
+- None / Not applicable
+—or—
+- <finding → requires correction | non-blocking/informational | not valid | outside current issue boundary>
+
+Follow-up / Out of scope:
+- None
+—or—
+- <separate follow-up/discovery/backlog candidate>
+
+Verdict: APPROVED | CHANGES REQUIRED | APPROVED — MERGE
+```
+
+Keep the comment concise. Do not reproduce the entire prompt or skill.
 
 ---
 
@@ -215,16 +276,18 @@ When a Codex finding is determined to be outside the current issue boundary, kee
 
 # Initial review procedure
 
-1. Read the governing issue and acceptance criteria.
-2. Inspect the actual current implementation diff/artifact.
-3. If Codex findings are present, treat them as review inputs and independently evaluate each against the complete current artifact and the three governing questions.
-4. Trace only the surrounding execution paths needed to evaluate the changed behavior.
-5. If a blocker exposes a directly interacting issue-scoped state/transition family governed by the same demonstrated behavior rule, perform the bounded directly related blocker sweep before ending the review.
-6. Run or inspect appropriate validation evidence.
-7. Answer the three governing questions.
-8. Report all presently identifiable **current-implementation blockers** together.
-9. Record worthwhile non-blocking observations under **Suggestions** without expanding the implementation scope.
-10. Return the explicit verdict.
+1. Read the governing Issue/PR, acceptance criteria, and relevant workflow-state comments.
+2. Identify the latest applicable `[AGENT #1 — IMPLEMENTATION]` or `[AGENT #1 — CORRECTION]` comment for the current phase without assuming the newest GitHub comment is relevant.
+3. Inspect the actual complete current implementation diff/artifact.
+4. If Codex findings are present, treat them as review inputs and independently evaluate each against the complete current artifact and the three governing questions.
+5. Trace only the surrounding execution paths needed to evaluate the changed behavior.
+6. If a blocker exposes a directly interacting issue-scoped state/transition family governed by the same demonstrated behavior rule, perform the bounded directly related blocker sweep before ending the review.
+7. Run or inspect appropriate validation evidence.
+8. Answer the three governing questions.
+9. Report all presently identifiable **current-implementation blockers** together.
+10. Record worthwhile non-blocking observations and follow-up/out-of-scope determinations without expanding implementation scope.
+11. Post the structured `[AGENT #2 — INDEPENDENT REVIEW]` comment to the governing Issue or PR.
+12. Return the explicit verdict.
 
 Keep the existing anti-drip-feeding rule for blockers: if multiple concrete reasons currently make one of the three governing questions fail, report them in the same pass when reasonably identifiable. After one blocker reveals a directly related issue-scoped behavior family, do not stop reasoning at the first failing permutation; perform the bounded sibling sweep needed to identify currently demonstrable blockers from that same cause.
 
@@ -238,13 +301,17 @@ Correction re-review is intentionally narrow but must evaluate the complete curr
 
 Agent #2 must:
 
-1. inspect the corrected artifact;
-2. verify that the demonstrated defect/root cause was corrected across its directly affected issue-scoped behavior boundary, not merely that the previously reported example changed;
-3. inspect the complete current implementation sufficiently to answer the three governing questions again;
-4. when the corrected behavior exposes a directly interacting sibling state/transition governed by the same demonstrated rule, perform the bounded directly related blocker sweep;
-5. determine whether the correction itself introduced a new bug/regression;
-6. report all presently demonstrable current-implementation blockers together;
-7. return the three answers and verdict.
+1. read the governing Issue/PR and latest applicable `[AGENT #1 — CORRECTION]` workflow-state comment;
+2. use prior review comments as history but not as a substitute for current-artifact review;
+3. inspect the complete corrected artifact;
+4. verify that the demonstrated defect/root cause was corrected across its directly affected issue-scoped behavior boundary, not merely that the previously reported example changed;
+5. inspect the complete current implementation sufficiently to answer the three governing questions again;
+6. when the corrected behavior exposes a directly interacting sibling state/transition governed by the same demonstrated rule, perform the bounded directly related blocker sweep;
+7. determine whether the correction itself introduced a new bug/regression;
+8. report all presently demonstrable current-implementation blockers together;
+9. record follow-up/out-of-scope determinations separately from current blockers;
+10. post a new `[AGENT #2 — INDEPENDENT REVIEW]` workflow-state comment to the same Issue/PR;
+11. return the three answers and verdict.
 
 Do not restart an open-ended architecture audit.
 
@@ -361,7 +428,7 @@ For integration-PR correction re-review:
 APPROVED — MERGE | CHANGES REQUIRED
 ```
 
-A reviewer may include concise validation evidence, but the output should stay centered on the three governing questions.
+A reviewer may include concise validation evidence, but the output should stay centered on the three governing questions. The same disposition must be posted to the governing Issue/PR as the structured `[AGENT #2 — INDEPENDENT REVIEW]` workflow-state comment.
 
 ---
 
@@ -404,6 +471,9 @@ The goal is to determine whether the current change met its contract without int
 A review follows this skill only when:
 
 - Agent #2 is independently invoked;
+- Agent #2 reads the governing Issue/PR and latest relevant Agent #1 workflow-state comment for the current phase;
+- prior workflow-state comments are treated as durable history, not as authority over the current artifact;
+- Agent #2 posts each review/disposition back to the same Issue/PR using `[AGENT #2 — INDEPENDENT REVIEW]`;
 - the actual implementation artifact is reviewed;
 - the decision is based on the three governing questions;
 - when Codex findings are present, Agent #2 independently evaluates the complete current artifact and each finding before determining disposition;
