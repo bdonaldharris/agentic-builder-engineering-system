@@ -116,6 +116,10 @@ Canonical reusable engineering procedures live under `skills/`.
 - [`independent-implementation-review`](skills/independent-implementation-review/SKILL.md) (`indep-review`) — Executes as **Agent #2 — Independent Review Agent** and defines the narrow three-question review contract, complete-artifact review, required verified durable Issue/PR disposition comments, bounded sibling-state review, and auditable independent disposition of every material Codex finding. Agent #2 never performs implementation/correction work, and its invocation is not complete until the governing Issue/PR record has been successfully written and verified.
 - [`integration-pr-review`](skills/integration-pr-review/SKILL.md) (`pr-review`) — Executes as **Agent #1 — Implementation Agent** for PR-side integration/finalization responsibilities. It governs durable PR workflow-state comments, terminal Codex handoffs with no waiting/polling, the canonical detailed Codex Integration Review Request, hard Agent #2 disposition boundaries, required verified Agent #2 disposition on the PR itself, exact-head merge authorization, bounded final-head review, Environment / Deployment Requirements gating, and non-recursive merge convergence.
 
+## Current candidate standards
+
+[Visible UI Metadata and Mechanism-Specific Evidence](docs/excavation/2026-10-06-visible-ui-metadata-and-evidence.md) records two candidate standards: keep agent collaboration context out of customer UI, and verify the specific mechanism asserted by any source-backed claim before adopting it.
+
 ### Review contract
 
 Application implementation review asks:
