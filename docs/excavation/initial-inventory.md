@@ -447,3 +447,32 @@ The inventory uses five statuses:
 **Candidate ABES layer:** Methodology / system evolution
 
 **Notes / open questions:** Determine when a practice has enough evidence and stability to become normative or executable.
+
+
+---
+
+## 32. Separate agent collaboration context from customer UI
+
+**Status:** Evidence-backed candidate standard
+
+**Current understanding:** Agent-readable collaboration context should use explicit non-customer-facing channels—repository structure, component names, structured metadata, project instructions, comments, test identifiers, and authorized tools. Customer-visible UI is product content and requires a production-readiness audit for annotations, placeholder copy, mock data, debug controls, and other prototype residue.
+
+**Refined by:** Investigation of the unsupported claim that agents deliberately render visible UI metadata to preserve their own memory. Rendering an identifier does not create a special agent-memory channel; source and tool context are the relevant mechanisms.
+
+**Candidate ABES layer:** Agent context design / product completion / verification
+
+**Notes / open questions:** Preserve accessibility labels, customer-relevant status, useful diagnostics, and error handling; cleanup must not become indiscriminate deletion.
+
+---
+
+## 33. Mechanism-specific source verification
+
+**Status:** Evidence-backed candidate standard
+
+**Current understanding:** A citation is adequate only when it supports the exact causal mechanism asserted. Sources that share terms or discuss an adjacent topic do not establish a narrower behavioral claim. Material claims about agent behavior should identify the precise mechanism, the system boundary, and an exact supporting quotation or primary source.
+
+**Refined by:** A source audit in which real material on context engineering, machine-readable design systems, and feature-flag cleanup did not support a claim that agents intentionally render metadata in customer UI to aid their own memory.
+
+**Candidate ABES layer:** Verification / review / governance
+
+**Notes / open questions:** This operationalizes evidence-bounded claims. “Not documented” and “not verifiable from the available evidence” remain valid engineering results.
