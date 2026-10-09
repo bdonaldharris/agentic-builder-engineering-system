@@ -2,6 +2,18 @@
 
 A system of engineering practices, standards, architecture, roles, contracts, and workflows for responsible software construction with AI agents.
 
+## An engineering discovery journey, built in public
+
+This repository documents an ongoing effort to discover, test, and refine practical engineering standards for building software with AI agents. It is being shared publicly so the journey is visible—not just its eventual conclusions.
+
+The practices here emerge from real software construction: investigating systems, implementing changes, independently reviewing work, correcting defects, preparing releases, and examining where the process succeeds or fails. Lessons become candidate standards; candidate standards are tested against subsequent work and revised when the evidence warrants it.
+
+This is **working engineering material, not a finished framework or a claim that every question has been settled**. Expect ideas to evolve, decisions to be revisited, and gaps to be documented. The repository captures both what the current operating model requires and why it has developed that way.
+
+The central question is not simply how to generate software faster with AI. It is **how builders can retain engineering judgment, accountability, and reliable control of the software they construct while working with AI agents**.
+
+The repository contains reusable engineering skills, operating contracts, documented standards, and discovery notes. Those artifacts are shared to make the reasoning and evolution of the practices inspectable and useful to other builders. They are not a substitute for evaluating the needs, constraints, and risks of a particular system.
+
 ## Operating model
 
 The engineering system separates responsibilities deliberately:
