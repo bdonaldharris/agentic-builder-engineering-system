@@ -91,7 +91,7 @@ Before reviewing, Agent #2 must:
 The governing artifact for the durable review record is:
 
 - the **Issue itself** for an implementation-stage Issue review;
-- the **PR itself** for a production-bound PR review, including Codex disposition and final-head review.
+- the **PR itself** for a production-bound PR review, including Codex disposition and correction re-review.
 
 The structured Agent #2 comment is part of workflow execution, not merely a report to the human. Producing the same review text in the agent response does not satisfy the durable-state requirement.
 
@@ -104,7 +104,7 @@ Use a concise comment such as:
 ```markdown
 [AGENT #2 — INDEPENDENT REVIEW]
 
-Phase: INITIAL REVIEW | CORRECTION RE-REVIEW | CODEX DISPOSITION | FINAL-HEAD CODEX DISPOSITION
+Phase: INITIAL REVIEW | CORRECTION RE-REVIEW | CODEX DISPOSITION
 Artifact/Head: <current artifact/head reference>
 
 Acceptance criteria met? Yes | No
@@ -425,6 +425,17 @@ For an integration-PR correction re-review, return:
 APPROVED — MERGE
 ```
 
+For a production-bound correction re-review, `APPROVED — MERGE` is the final substantive review approval for the corrected artifact. No additional Codex review is required on the normal path.
+
+After this approval:
+
+- Agent #1 may commit/push only the exact artifact Agent #2 reviewed;
+- no implementation code changes may be made after approval;
+- the pushed artifact must be verified equivalent to the reviewed artifact;
+- if implementation changes occur after approval or the pushed artifact does not match, the approval is no longer sufficient and the changed artifact must return to Agent #2 review.
+
+Do not route artifact-equivalence uncertainty through another Codex review.
+
 Suggestions discovered during re-review do not prevent approval.
 
 If the verdict is `CHANGES REQUIRED`, including when a Codex finding requires correction, Agent #2 records the blocker, the failed governing question(s), and the Codex disposition when applicable; then posts the structured review disposition and stops. Agent #2 does not perform the correction. Correction belongs to a separately invoked Agent #1.
@@ -498,7 +509,7 @@ Evidence:
 ## Verdict
 APPROVED | CHANGES REQUIRED
 
-For integration-PR correction/final-head re-review:
+For integration-PR correction re-review:
 APPROVED — MERGE | CHANGES REQUIRED
 ```
 
