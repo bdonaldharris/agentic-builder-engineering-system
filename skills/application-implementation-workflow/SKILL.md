@@ -1,6 +1,6 @@
 ---
 name: application-implementation-workflow
-description: Shorthand: implement-workflow. Govern the application implementation lifecycle with scoped Agent #1 implementation, independent Agent #2 review, coherent issue-bound corrections, one normal automated PR review plus a bounded final-head artifact-integrity review after validated corrections, and boring promotion. Inspect existing architecture before inventing new structures, ask when material requirements are ambiguous, and use the three-question review contract without expanding work into unrelated application auditing.
+description: Shorthand: implement-workflow. Govern the application implementation lifecycle with scoped Agent #1 implementation, independent Agent #2 review, coherent issue-bound corrections, one substantive Codex review on the initial production-bound PR artifact, Agent #2-owned correction approval, and boring promotion. Inspect existing architecture before inventing new structures, ask when material requirements are ambiguous, and use the three-question review contract without expanding work into unrelated application auditing.
 ---
 
 # Application Implementation Workflow
@@ -516,50 +516,32 @@ Use `integration-pr-review`.
 
 The intended production-bound PR flow is:
 
-1. Agent #1 posts the complete canonical Codex Integration Review Request on the stable PR head;
+1. Agent #1 posts the complete canonical Codex Integration Review Request on the stable initial PR head;
 2. posting that Codex request is a terminal handoff for the current Agent #1 invocation — Agent #1 stops immediately and does not wait/poll for Codex;
 3. after Codex returns, a separately invoked Agent #2 independently reviews the complete current artifact and dispositions every material Codex finding against the three governing questions;
 4. findings that do not require current correction are recorded as non-blocking/informational, invalid, or follow-up/out-of-scope as applicable;
-5. correction begins only through a new Agent #1 invocation when Agent #2 returns `CHANGES REQUIRED`;
-6. every Agent #1 correction remains governed by the global Agent #1 execution invariant, coherent correction boundary, churn trigger when applicable, and universal pre-return completion gate;
-7. after `READY FOR AGENT #2 RE-REVIEW`, Agent #1 stops; a separate Agent #2 invocation performs complete-artifact re-review;
-8. if Agent #2 returns `APPROVED — MERGE`, a new Agent #1 finalization invocation may verify the approved artifact, commit/push exactly the approved correction, confirm the stable PR head, and post the complete canonical final-head Codex review request;
-9. posting the final-head Codex request is again a terminal handoff — Agent #1 stops immediately;
-10. a separately invoked Agent #2 dispositions the final-head Codex result; only after an Agent #2 approval for the exact current PR head and all remaining gates are satisfied may a later Agent #1 invocation merge.
+5. if no validated blocker remains, merge may proceed when CI, human approval, Environment / Deployment Requirements, and other existing gates are satisfied;
+6. if Agent #2 returns `CHANGES REQUIRED`, correction begins only through a new Agent #1 invocation;
+7. every Agent #1 correction remains governed by the global Agent #1 execution invariant, coherent correction boundary, churn trigger when applicable, and universal pre-return completion gate;
+8. after `READY FOR AGENT #2 RE-REVIEW`, Agent #1 stops; a separate Agent #2 invocation performs complete-artifact correction re-review;
+9. if Agent #2 returns `APPROVED — MERGE`, Agent #2 owns final substantive correction approval. Agent #1 may then commit/push exactly the artifact Agent #2 reviewed, verify artifact equivalence, and proceed to merge when the remaining gates are satisfied;
+10. do **not** trigger another Codex review after an Agent #2-approved correction.
 
-The final-head automated review is an **artifact-integrity gate**. Automated review remains evidence, not authority.
+## Post-correction approval invariant
 
-Diagnostic scenarios, reviewer-generated matrices, and automated examples do not create new acceptance criteria. A final-head finding blocks only when it demonstrates:
+**Codex reviews the initial production-bound PR artifact once. After a validated Codex blocker is corrected, Agent #2 owns final correction approval. `Yes -> No -> Yes` on the corrected artifact authorizes merge. No additional Codex review is performed unless the artifact changes after Agent #2 approval.**
 
-1. an original acceptance criterion is unmet;
-2. the current artifact introduced or materially worsened a bug/regression; or
-3. the implemented behavior does not work.
+After Agent #2 returns `APPROVED — MERGE`:
 
-## Final-head anti-recursion rule
+- Agent #1 may commit/push only the exact reviewed correction;
+- no implementation code changes may be made after that approval;
+- Agent #1 must verify that the pushed artifact matches the artifact Agent #2 approved;
+- non-code merge-finalization activity already permitted by the workflow may continue;
+- no further Codex review is part of the normal path.
 
-A final-head automated review is **required** after a validated blocker correction changes the pushed production-bound PR head.
+If the pushed artifact does not match what Agent #2 reviewed, or implementation code changes after approval, the Agent #2 approval is no longer sufficient. The changed artifact must return to Agent #2 review.
 
-Do **not** run repeated automated reviews when no subsequent implementation correction changes the artifact.
-
-Do **not** blindly obey automated findings or allow automated review to expand acceptance criteria.
-
-If the final-head automated review identifies another validated blocker and another correction materially changes the artifact, the normal sequence applies again because the production-bound artifact changed:
-
-```text
-validated blocker
-  ↓
-Agent #1 coherent correction
-  ↓
-Agent #2 complete-artifact re-review
-  ↓
-APPROVED — MERGE
-  ↓
-commit + push exactly approved correction
-  ↓
-one bounded final-head automated review on new stable head
-```
-
-This is artifact convergence, not recursive review for its own sake.
+Do not use Codex to repair artifact-equivalence uncertainty.
 
 ---
 
@@ -657,7 +639,7 @@ In particular:
 - correction prompts address only demonstrated current-implementation blockers;
 - suggestions do not expand implementation scope;
 - integration PR prompts invoke `integration-pr-review`;
-- correction-finalization prompts require one bounded final-head automated review after an approved validated-blocker correction changes the pushed production-bound head; that review must use the complete canonical Codex Integration Review Request from `integration-pr-review`, not a bare trigger, and must not repeat when no subsequent implementation correction changes the artifact.
+- correction-finalization prompts require Agent #1 to commit/push exactly the Agent #2-approved correction, verify artifact equivalence, make no implementation changes after approval, and proceed without another Codex review unless the artifact changes after Agent #2 approval; a changed artifact returns to Agent #2 review.
 
 ---
 
@@ -708,14 +690,24 @@ universal pre-return completion gate
                       ├── Yes → CHANGES REQUIRED → STOP → separate Agent #1 correction invocation
                       └── No → later Agent #1 merge/finalization invocation when all gates are satisfied
 
-After any artifact-changing approved correction:
-Agent #1 push + post bounded final-head Codex request → STOP
+After any validated Codex blocker:
+Agent #1 correction
   ↓
-separate Agent #2 final-head disposition
+READY FOR AGENT #2 RE-REVIEW → STOP
   ↓
-merge only after exact-head approval + required gates
+separate Agent #2 complete-artifact correction re-review
   ↓
-intentionally boring promotion
+APPROVED — MERGE?
+  ├── No → separate Agent #1 correction cycle
+  └── Yes → Agent #1 commit/push exact approved artifact
+                ↓
+             verify artifact equivalence
+                ↓
+             no further Codex review
+                ↓
+             merge after remaining required gates
+                ↓
+             intentionally boring promotion
 ```
 
 ---
@@ -759,7 +751,9 @@ An implementation follows this skill only when:
 - automated findings are independently evaluated as evidence, not authority;
 - correction re-review evaluates the complete current artifact;
 - `Yes -> No -> Yes` yields approval;
-- a validated blocker correction that changes the pushed production-bound PR head requires one bounded final-head automated review;
-- repeated automated review without another implementation correction changing the artifact is not required;
+- after a validated Codex blocker correction, `Yes -> No -> Yes` from Agent #2 authorizes merge for the corrected artifact;
+- Agent #1 may commit/push only the exact Agent #2-approved correction and must verify the pushed artifact matches it;
+- no additional Codex review is performed after Agent #2 correction approval unless implementation code changes after approval;
+- if the artifact changes after Agent #2 approval, that approval is no longer sufficient and the changed artifact returns to Agent #2 review;
 - required CI and human approval remain in force;
 - promotion remains intentionally boring.
