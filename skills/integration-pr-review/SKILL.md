@@ -1,6 +1,6 @@
 ---
 name: integration-pr-review
-description: Shorthand: pr-review. Review and gate an implementation pull request using the narrow three-question contract: original acceptance criteria met, no new bug/regression introduced, and changed behavior works. Run one normal automated review on the stable initial head, terminate Agent #1 at Codex/Agent #2 handoffs, require separately invoked Agent #2 disposition, correct only validated current-PR defects at their coherent issue-scoped behavior boundary, and run one bounded final-head artifact-integrity review after each validated correction changes the pushed PR head.
+description: Shorthand: pr-review. Review and gate an implementation pull request using the narrow three-question contract: original acceptance criteria met, no new bug/regression introduced, and changed behavior works. Run one substantive Codex review on the stable initial production-bound head, terminate Agent #1 at Codex/Agent #2 handoffs, require separately invoked Agent #2 disposition, and make Agent #2 correction re-review the final substantive approval gate for corrected artifacts.
 ---
 
 # Integration PR Review
@@ -236,8 +236,8 @@ At invocation start, determine the durable state that actually exists for the ex
 - **Codex requested, result not yet returned:** STOP immediately. Do not wait or poll.
 - **Codex findings returned, no Agent #2 disposition for the exact current stable head:** STOP immediately. A separately invoked Agent #2 must disposition the complete artifact and Codex findings.
 - **Agent #2 returned `CHANGES REQUIRED`:** STOP. Correction requires a separate Agent #1 invocation using `application-implementation-workflow`.
-- **Agent #2 approval exists, but the PR head differs from the artifact/head Agent #2 reviewed:** STOP. The approval is stale for merge purposes.
-- **Agent #2 approved the exact current PR head and all required final-head, CI, human-approval, Environment / Deployment Requirements, and other merge gates are satisfied:** Agent #1 may perform the authorized finalization/merge work.
+- **Agent #2 approved a corrected artifact, but the pushed/current artifact is not equivalent to what Agent #2 reviewed or implementation code changed after approval:** STOP. The approval is no longer sufficient; the changed artifact must return to Agent #2 review.
+- **Agent #2 approved the corrected artifact, the pushed artifact is verified equivalent to that reviewed artifact, and CI, human approval, Environment / Deployment Requirements, and other existing merge gates are satisfied:** Agent #1 may perform the authorized finalization/merge work without another Codex review.
 
 Each STOP above is terminal for the current invocation. Do not wait for the blocking state to change.
 
@@ -291,10 +291,9 @@ When Codex findings exist, they are durable PR review inputs for a separately in
 
 ## Canonical Codex Integration Review Request
 
-Use this complete top-level PR comment for both:
+Use this complete top-level PR comment for the **one substantive Codex review on the stable initial production-bound PR head**.
 
-- the normal automated review on the stable initial PR head;
-- the bounded final-head artifact-integrity review after a validated correction changes the pushed PR head.
+Do not reuse it after an Agent #2-approved correction. Agent #2 correction re-review is the final substantive review gate for the corrected artifact unless implementation code changes after approval.
 
 ```markdown
 @codex review
@@ -390,8 +389,9 @@ If a genuine current-PR blocker exists:
    - Does it work?
 11. If the result is `Yes -> No -> Yes`, Agent #2 returns:
    `APPROVED — MERGE`
-12. In a separate Agent #1 finalization invocation after Agent #2 approval, verify the approved artifact, commit and push exactly that approved correction, confirm the stable PR head matches the approved artifact, and post the complete canonical Codex Integration Review Request defined by this skill.
-13. **STOP immediately after posting the final-head Codex request.** Do not wait, poll, monitor, or continue into final-head disposition.
+12. In a separate Agent #1 finalization invocation after Agent #2 returns `APPROVED — MERGE`, verify the approved artifact, commit and push exactly that approved correction, and verify that the pushed artifact is equivalent to what Agent #2 reviewed.
+13. Do **not** post another Codex review request. Proceed to merge when CI, human approval, Environment / Deployment Requirements, and other existing merge gates are satisfied.
+14. If the pushed artifact is not equivalent to the Agent #2-reviewed correction, or implementation code changes after approval, stop. The approval is no longer sufficient and the changed artifact must return to Agent #2 review.
 
 Correction work must not expand into suggestions or unrelated cleanup.
 
@@ -401,55 +401,20 @@ Diagnostic state models, scenario matrices, reviewer-generated examples, and aut
 
 ---
 
-# Phase 5 — Final-head automated artifact-integrity review
+# Post-correction artifact equivalence
 
-After Agent #2 returns `APPROVED — MERGE` for a validated blocker correction, a separate Agent #1 finalization invocation commits/pushes exactly that approved correction and confirms the new stable production-bound PR head.
+After Agent #2 returns `APPROVED — MERGE` for a corrected production-bound artifact:
 
-Agent #1 then posts **one bounded final-head automated/Codex review** on that new stable head using the same complete Canonical Codex Integration Review Request defined in Phase 2. A bare `@codex review` does not satisfy the final-head artifact-integrity gate.
+- Agent #2 owns final substantive correction approval;
+- Agent #1 may commit/push only the exact reviewed correction;
+- no implementation code changes may be made after Agent #2 approval;
+- Agent #1 must verify that the pushed artifact is equivalent to the artifact Agent #2 reviewed;
+- no additional Codex review is performed on the normal path;
+- non-code merge-finalization activity already permitted by the workflow may continue.
 
-**Posting the final-head Codex request is a terminal handoff. Agent #1 stops immediately.** Do not wait, poll, sleep/retry, monitor the PR, or autonomously continue after Codex returns.
+If implementation code changes after Agent #2 approval, or the pushed artifact does not match what Agent #2 reviewed, the approval is no longer sufficient. The changed artifact must return to Agent #2 review.
 
-This final-head review is an **artifact-integrity gate**, not permission for recursive automated-review churn.
-
-After final-head Codex results exist, a separately invoked Agent #2 reviews the complete current artifact, uses prior PR workflow-state comments only as history, independently dispositions every material final-head Codex finding using the same three-question contract, and posts the resulting `[AGENT #2 — INDEPENDENT REVIEW]` disposition to the PR:
-
-1. Is an original issue acceptance criterion unmet?
-2. Did the current artifact introduce or materially worsen a bug/regression?
-3. Does the implemented behavior fail to work?
-
-Automated review remains evidence, not authority.
-
-Diagnostic scenarios, reviewer-generated matrices, automated examples, and hardening ideas do not create new acceptance criteria.
-
-## Anti-recursion rule
-
-**Required:** one final-head automated review after a validated blocker correction changes the pushed production-bound PR head.
-
-**Not required:** another automated review when no subsequent implementation correction changes the artifact.
-
-**Forbidden:** blindly obeying automated findings, treating reviewer severity as disposition, bypassing Agent #2 disposition, or allowing automated review to expand acceptance criteria.
-
-If the final-head automated review identifies another validated blocker and another correction materially changes the artifact, the normal production-bound sequence applies again because the artifact changed:
-
-```text
-final-head finding
-  ↓
-independent three-question disposition
-  ↓
-validated blocker?
-  ├── No → suggestion / no implementation change
-  └── Yes → Agent #1 coherent correction
-               ↓
-            Agent #2 complete-artifact re-review
-               ↓
-            Yes -> No -> Yes = APPROVED — MERGE
-               ↓
-            commit + push exactly approved correction
-               ↓
-            one bounded final-head automated review on new stable head
-```
-
-Do not run repeated automated reviews merely because an automated review occurred or because a finding was discussed. Another final-head review is tied to another implementation correction that materially changed the production-bound artifact.
+Do not trigger Codex again to resolve artifact-equivalence uncertainty.
 
 ---
 
@@ -491,7 +456,7 @@ Do not invent deployment work through open-ended archaeology. Verify the known r
 
 ---
 
-# Phase 6 — Merge decision
+# Phase 5 — Merge decision
 
 The PR is ready to merge when:
 
@@ -501,7 +466,7 @@ The PR is ready to merge when:
 - any genuine current-PR blockers found by automated review were corrected and re-approved by Agent #2 against the complete artifact;
 - a durable Agent #2 approval exists for the exact current PR head;
 - the pushed artifact matches the artifact/head Agent #2 approved;
-- when a validated correction changed the pushed PR head, the required bounded final-head automated review has completed and no validated blocker remains;
+- after any validated correction, the pushed artifact has been verified equivalent to the Agent #2-approved correction and no implementation code changed after approval;
 - `Environment / Deployment Requirements` has been explicitly surfaced, including `None` when no non-code actions are required;
 - required CI/checks are acceptable;
 - required human approval is present.
@@ -587,7 +552,8 @@ Do not:
 - convert diagnostic scenarios or automated examples into new acceptance criteria;
 - ask automated review to search broadly for unrelated production concerns;
 - hold the PR open for preexisting or adjacent issues;
-- run repeated automated reviews when no subsequent implementation correction changes the artifact;
+- run another Codex review after Agent #2 approves a corrected artifact on the normal path;
+- use Codex to resolve artifact-equivalence uncertainty after Agent #2 approval;
 - wait, poll, sleep/retry, or monitor for a Codex/Agent #2 state after posting a terminal handoff.
 
 Do:
@@ -598,9 +564,9 @@ Do:
 - route the complete automated-review result to separately invoked Agent #2 for independent disposition against the three governing questions;
 - correct only validated current-PR defects at their coherent issue-scoped behavior boundary;
 - use separate complete-artifact Agent #2 re-review for those corrections;
-- after Agent #2 approval and push of the exact approved correction, run one bounded final-head automated review because the production-bound artifact changed;
-- if that final-head review validates another blocker and another correction changes the artifact, repeat the correction/re-review/final-head sequence for the newly changed artifact;
-- merge when the stable final artifact satisfies `Yes -> No -> Yes`, required checks, and human approval.
+- after Agent #2 returns `APPROVED — MERGE` on a corrected artifact, commit/push only the exact reviewed correction and verify artifact equivalence;
+- if implementation code changes after Agent #2 approval or equivalence fails, return the changed artifact to Agent #2 review rather than triggering Codex again;
+- merge when the Agent #2-approved corrected artifact remains unchanged and required checks, human approval, and other existing gates are satisfied.
 
 ---
 
@@ -643,20 +609,14 @@ Yes -> No -> Yes?
                                ↓
                             commit / push exactly approved correction
                                ↓
-                            post bounded final-head Codex request
+                            verify artifact equivalence
                                ↓
-                             STOP
+                            no further Codex review
                                ↓
-                      separate Agent #2 invocation
-                               ↓
-                            Agent #2 disposition recorded on PR
-                               ↓
-                            another validated blocker?
-                               ├── No → later Agent #1 merge invocation after CI / human approval
-                               └── Yes → STOP → separate correction / re-review / final-head invocations
+                            later Agent #1 merge invocation after remaining gates
 ```
 
-A final-head automated review occurs because a validated correction changed the production-bound artifact. It does not recurse when the artifact has not changed again.
+If implementation code changes after Agent #2 approval, or the pushed artifact is not equivalent to the reviewed correction, the changed artifact returns to Agent #2 review.
 
 ---
 
@@ -669,7 +629,7 @@ An integration PR follows this skill only when:
 - Codex is a review input, not Agent #2, and Codex silence/finding labels never substitute for Agent #2 disposition;
 - every Agent #2 disposition requires a separate `independent-implementation-review` invocation;
 - reaching an Agent #2 review/disposition boundary is a hard stop for Agent #1;
-- posting an initial or final-head canonical Codex review request is a terminal Agent #1 handoff; the invocation ends immediately afterward;
+- posting the initial canonical Codex review request is a terminal Agent #1 handoff; the invocation ends immediately afterward;
 - Agent #1 never waits, polls, sleeps/retries, monitors, or autonomously continues across a Codex/Agent #2 handoff boundary;
 - when an existing PR is not yet in a state authorized for Agent #1 action, Agent #1 stops rather than waiting for that state to appear;
 - Agent #1 never creates `[AGENT #2 — INDEPENDENT REVIEW]`;
@@ -696,8 +656,10 @@ An integration PR follows this skill only when:
 - separately invoked Agent #2 re-reviews the complete corrected artifact only after `READY FOR AGENT #2 RE-REVIEW`;
 - a directly related sibling failure after correction triggers bounded churn analysis before another correction;
 - `Yes -> No -> Yes` after correction produces `APPROVED — MERGE`;
-- a validated correction that changes the pushed production-bound PR head requires one bounded final-head automated review;
-- repeated automated review is not required when no subsequent implementation correction changes the artifact;
+- after a validated Codex blocker correction, Agent #2 correction re-review is the final substantive review gate;
+- `Yes -> No -> Yes` on the corrected artifact produces `APPROVED — MERGE` without another Codex review;
+- Agent #1 may commit/push only the exact Agent #2-approved correction and must verify artifact equivalence;
+- if implementation code changes after approval or equivalence fails, the changed artifact returns to Agent #2 review rather than Codex;
 - automated findings remain evidence, not authority;
 - the PR is not declared merge-ready until `Environment / Deployment Requirements` has been explicitly surfaced, including `None` when applicable;
 - environment/deployment actions are classified as operational requirements rather than code blockers unless the implementation omitted a required artifact/contract;
